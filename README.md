@@ -80,7 +80,7 @@ Default embedding model is `sentence-transformers/LaBSE` (multilingual). If mode
 
 If you have interviews already uploaded to TheirStory, you can easily obtain the JSON files:
 
-1. Navigate to https://lab.theirstory.io/ts-api-core-demo/v019/
+1. Navigate to https://lab.theirstory.io/ts-api-core-demo/v022/
 2. Log in with your TheirStory username and password
 3. Download the JSON files for your interviews
 
@@ -132,19 +132,14 @@ curl -s "http://localhost:8080/v1/objects?class=Chunks" | jq '.objects | length'
 
 **JSON Format:** See [docs/IMPORTING_INTERVIEWS.md](./docs/IMPORTING_INTERVIEWS.md)
 
-## 📚 Documentation
-
-- **[CONFIGURATION.md](./CONFIGURATION.md)** - Portal configuration, colors, NER labels
-- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Container architecture and services
-- **[docs/IMPORTING_INTERVIEWS.md](./docs/IMPORTING_INTERVIEWS.md)** - JSON format and import process
-- **[docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)** - Environment variables and advanced configuration
-- **[docs/COMMANDS.md](./docs/COMMANDS.md)** - All available commands
-- **[docs/DEPLOY_PRODUCTION_DO.md](./docs/DEPLOY_PRODUCTION_DO.md)** - Production deployment guide (works on any Docker host, with DigitalOcean example)
-- **[docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
-
 ## 🚢 Production Deployment
 
 This production flow works on any Linux host with Docker.
+
+Before running deployment commands:
+
+- Create a Linux server in your hosting provider (DigitalOcean, AWS, Hetzner, etc.).
+- Connect to that server via SSH (example: `ssh root@YOUR_SERVER_IP`).
 
 On the server terminal (remote host):
 
@@ -161,15 +156,15 @@ sudo bash scripts/deploy/setup-docker-ubuntu.sh
 ./scripts/deploy/deploy-prod.sh
 ```
 
-If you already have indexed data locally and want to avoid re-import/NLP processing in production:
+First production build can take **15-20 minutes** on small servers.
+
+If you already have indexed data locally and want to avoid re-import/NLP processing in production (recommended):
 
 On your local terminal:
 
 ```bash
-# Local machine
-./scripts/deploy/export-weaviate-data.sh
-scp weaviate-data.tar.gz user@YOUR_SERVER_IP:/tmp/
-scp config.json user@YOUR_SERVER_IP:/path/to/ts-portal/config.json
+# One command: export backup + sync config/json/public + upload backup
+./scripts/deploy/export-weaviate-data.sh "$PWD/weaviate-data.tar.gz" ts-portal_weaviate_data root@YOUR_SERVER_IP /root/ts-portal
 ```
 
 On the server terminal:
@@ -179,7 +174,19 @@ On the server terminal:
 ./scripts/deploy/deploy-prod.sh
 ```
 
+Note: with server parameters, `export-weaviate-data.sh` also syncs `config.json`, `json/`, and `public/`.
+
 Full guide (DigitalOcean example): **[docs/DEPLOY_PRODUCTION_DO.md](./docs/DEPLOY_PRODUCTION_DO.md)**
+
+## 📚 Documentation
+
+- **[CONFIGURATION.md](./CONFIGURATION.md)** - Portal configuration, colors, NER labels
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Container architecture and services
+- **[docs/IMPORTING_INTERVIEWS.md](./docs/IMPORTING_INTERVIEWS.md)** - JSON format and import process
+- **[docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)** - Environment variables and advanced configuration
+- **[docs/COMMANDS.md](./docs/COMMANDS.md)** - All available commands
+- **[docs/DEPLOY_PRODUCTION_DO.md](./docs/DEPLOY_PRODUCTION_DO.md)** - Production deployment guide (works on any Docker host, with DigitalOcean example)
+- **[docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## ⚡ Common Commands
 

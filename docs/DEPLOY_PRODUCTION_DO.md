@@ -59,26 +59,21 @@ Default production services:
 
 Use this if you want to avoid re-running GLiNER/embedding import in production.
 
-### 4.1 Export on local machine
+### 5.1 Export on local machine
 
 Inside local repo:
 
 ```bash
-./scripts/deploy/export-weaviate-data.sh
+./scripts/deploy/export-weaviate-data.sh "$PWD/weaviate-data.tar.gz" ts-portal_weaviate_data root@YOUR_DROPLET_IP /root/ts-portal
 ```
 
-This creates `weaviate-data.tar.gz` in the repository folder.
+This command exports Weaviate data and uploads to the Droplet:
+- `/tmp/weaviate-data.tar.gz`
+- `config.json`
+- `json/`
+- `public/`
 
-### 4.2 Copy backup + config to Droplet
-
-Run from local machine:
-
-```bash
-scp weaviate-data.tar.gz root@YOUR_DROPLET_IP:/root/
-scp config.json root@YOUR_DROPLET_IP:/root/ts-portal/config.json
-```
-
-### 4.3 Restore on Droplet
+### 5.2 Restore on Droplet
 
 Inside Droplet repo:
 
