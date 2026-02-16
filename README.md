@@ -154,6 +154,9 @@ sudo bash scripts/deploy/setup-docker-ubuntu.sh
 
 # Deploy/update
 ./scripts/deploy/deploy-prod.sh
+
+# Optional but recommended: domain + HTTPS + firewall
+# sudo bash scripts/deploy/setup-nginx-ssl.sh YOUR_DOMAIN YOUR_EMAIL 3000
 ```
 
 First production build can take **15-20 minutes** on small servers.
