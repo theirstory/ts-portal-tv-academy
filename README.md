@@ -167,13 +167,14 @@ On your local terminal:
 On the server terminal:
 
 ```bash
+cd /root/ts-portal
 ./scripts/deploy/restore-weaviate-data.sh /tmp/weaviate-data.tar.gz
 ./scripts/deploy/deploy-prod.sh
 ```
 
 Note: with server parameters, `export-weaviate-data.sh` also syncs `config.json`, `json/`, and `public/`.
 
-Full guide (DigitalOcean example): **[docs/DEPLOY_PRODUCTION_DO.md](./docs/DEPLOY_PRODUCTION_DO.md)**
+Full guide (DigitalOcean example): **[docs/DEPLOY_PRODUCTION.md](./docs/DEPLOY_PRODUCTION.md)**
 
 ## 📚 Documentation
 
@@ -182,7 +183,7 @@ Full guide (DigitalOcean example): **[docs/DEPLOY_PRODUCTION_DO.md](./docs/DEPLO
 - **[docs/IMPORTING_INTERVIEWS.md](./docs/IMPORTING_INTERVIEWS.md)** - JSON format and import process
 - **[docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md)** - Environment variables and advanced configuration
 - **[docs/COMMANDS.md](./docs/COMMANDS.md)** - All available commands
-- **[docs/DEPLOY_PRODUCTION_DO.md](./docs/DEPLOY_PRODUCTION_DO.md)** - Production deployment guide (works on any Docker host, with DigitalOcean example)
+- **[docs/DEPLOY_PRODUCTION.md](./docs/DEPLOY_PRODUCTION.md)** - Production deployment guide (works on any Docker host, with DigitalOcean example)
 - **[docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ## ⚡ Common Commands
@@ -234,6 +235,7 @@ portals/
 ├── docs/                   # Documentation
 │   ├── ARCHITECTURE.md
 │   ├── COMMANDS.md
+│   ├── DEPLOY_PRODUCTION.md
 │   ├── ENVIRONMENT.md
 │   ├── IMPORTING_INTERVIEWS.md
 │   └── TROUBLESHOOTING.md
