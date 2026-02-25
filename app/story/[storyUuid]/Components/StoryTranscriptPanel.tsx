@@ -32,6 +32,7 @@ export const StoryTranscriptPanel = ({ isMobile = false }: StoryTranscriptPanelP
     initializeExpandedSections,
     setIsCurrentTimeOutOfView,
     isCurrentTimeOutOfView,
+    targetScrollTime,
   } = useTranscriptPanelStore();
   const { isPlaying, currentTime } = usePlayerStore();
   const { seekAndScroll, scrollToTime } = useTranscriptNavigation();
@@ -53,6 +54,21 @@ export const StoryTranscriptPanel = ({ isMobile = false }: StoryTranscriptPanelP
   const areAccordionsInitialized = Object.keys(expandedSections).length === sections.length;
   const startParam = searchParams.get('start');
   const endParam = searchParams.get('end');
+
+  /**
+   * Expand the accordion section that contains the target scroll time so the paragraph can mount and scroll.
+   * Without this, the paragraph at e.g. 1:10:53 is inside a collapsed section and never runs its scroll effect.
+   */
+  useEffect(() => {
+    if (targetScrollTime === null || sections.length === 0) return;
+    const section = sections.find((sec) => {
+      const paragraphs = sec.paragraphs ?? [];
+      return paragraphs.some((p) => targetScrollTime >= p.start && targetScrollTime < p.end);
+    });
+    if (section && !expandedSections[section.start]) {
+      toggleSection(section.start);
+    }
+  }, [targetScrollTime, sections, expandedSections, toggleSection]);
 
   /**
    * effects
