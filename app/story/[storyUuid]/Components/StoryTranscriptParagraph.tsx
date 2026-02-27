@@ -134,18 +134,22 @@ export const StoryTranscriptParagraph = memo(
 
       if (!isTargetParagraph) return;
 
-      const element = paragraphRef.current;
       const scrollContainer = document.getElementById('transcript-panel-content');
+      if (!scrollContainer) return;
 
-      if (!element || !scrollContainer) return;
+      const doScroll = () => {
+        const element = paragraphRef.current;
+        if (!element) return;
+        isProgrammaticScrollRef.current = true;
+        scrollElementIntoContainer(element, scrollContainer, transcriptTopOffset);
+        setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, 120);
+        setTargetScrollTime(null);
+      };
 
-      isProgrammaticScrollRef.current = true;
-      scrollElementIntoContainer(element, scrollContainer, transcriptTopOffset);
-      setTimeout(() => {
-        isProgrammaticScrollRef.current = false;
-      }, 120);
-
-      setTargetScrollTime(null);
+      const t = setTimeout(doScroll, 100);
+      return () => clearTimeout(t);
     }, [
       targetScrollTime,
       paragraph.start,

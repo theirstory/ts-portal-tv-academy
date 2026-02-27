@@ -21,7 +21,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useSemanticSearchStore } from '@/app/stores/useSemanticSearchStore';
 import { getNerColor, getNerDisplayName } from '@/config/organizationConfig';
-import { searchNerEntitiesAcrossCollection } from '@/lib/weaviate/search';
+import {
+  searchNerEntitiesAcrossCollection,
+  getNerEntityRecordingCounts,
+} from '@/lib/weaviate/search';
 import { WeaviateGenericObject } from 'weaviate-client';
 import { Chunks } from '@/types/weaviate';
 import { colors } from '@/lib/theme';
