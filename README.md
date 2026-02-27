@@ -41,8 +41,8 @@ A complete system to archive, process, and search video/audio interviews with th
 
 ```bash
 # 1. Clone and configure
-git clone git@github.com:theirstory/portals.git
-cd portals
+git clone git@github.com:theirstory/ts-portal.git
+cd ts-portal
 
 cp config.example.json config.json
 # Edit config.json with your organization details
@@ -229,7 +229,7 @@ See [docs/COMMANDS.md](./docs/COMMANDS.md) for the complete list.
 ## 📁 Project Structure
 
 ```
-portals/
+ts-portal/
 ├── app/                    # Next.js application
 │   ├── story/[storyUuid]/  # Interview detail pages
 │   ├── stores/             # Zustand state management
