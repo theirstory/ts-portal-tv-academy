@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Button, Paper, CircularProgress } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { useChatContext } from '@/app/chat/ChatContext';
+import { useChatContext } from '@/app/discover/ChatContext';
 import { Citation } from '@/types/chat';
 
 type SearchType = 'bm25' | 'vector' | 'hybrid';
@@ -83,7 +83,7 @@ export const TextSelectionPopover = ({ containerRef }: Props) => {
     setActiveSearchType(searchType);
 
     try {
-      const response = await fetch('/api/chat/search', {
+      const response = await fetch('/api/discover/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: selectedText, searchType }),

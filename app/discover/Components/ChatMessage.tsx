@@ -7,7 +7,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { ChatMessage as ChatMessageType } from '@/types/chat';
 import { ChatMessageContent } from './ChatMessageContent';
-import { useChatContext } from '@/app/chat/ChatContext';
+import { useChatContext } from '@/app/discover/ChatContext';
 import { colors } from '@/lib/theme';
 
 type Props = {

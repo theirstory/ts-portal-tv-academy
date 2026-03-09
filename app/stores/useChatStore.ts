@@ -95,7 +95,7 @@ export const useChatStore = create<ChatStore>()(
             .filter((m) => m.content.length > 0)
             .map((m) => ({ role: m.role, content: m.content }));
 
-          const response = await fetch('/api/chat', {
+          const response = await fetch('/api/discover', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

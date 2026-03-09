@@ -10,7 +10,7 @@ export const MainContainer = ({ children }: { children: React.ReactNode }) => {
   const searchParams = useSearchParams();
   const isEmbed = searchParams.get('embed') === 'true';
   const isStoryPage = pathname.startsWith('/story/');
-  const isChatPage = pathname.startsWith('/chat');
+  const isChatPage = pathname.startsWith('/discover');
   return (
     <Box
       id="main-container"

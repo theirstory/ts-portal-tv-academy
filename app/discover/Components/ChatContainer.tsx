@@ -5,7 +5,7 @@ import { Box } from '@mui/material';
 import { ChatPanel } from './ChatPanel';
 import { SidePanel } from './SidePanel';
 import { TextSelectionPopover } from './TextSelectionPopover';
-import { ChatContextProvider } from '@/app/chat/ChatContext';
+import { ChatContextProvider } from '@/app/discover/ChatContext';
 import { useChatStore } from '@/app/stores/useChatStore';
 import { Citation } from '@/types/chat';
 

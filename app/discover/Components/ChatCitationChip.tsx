@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Tooltip } from '@mui/material';
 import { Citation } from '@/types/chat';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { useChatContext } from '@/app/chat/ChatContext';
+import { useChatContext } from '@/app/discover/ChatContext';
 import { colors } from '@/lib/theme';
 
 type Props = {

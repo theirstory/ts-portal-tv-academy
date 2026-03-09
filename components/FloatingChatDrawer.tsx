@@ -29,11 +29,11 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import MuxPlayer from '@mux/mux-player-react';
 import { usePathname } from 'next/navigation';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { ChatMessage } from '@/app/chat/Components/ChatMessage';
+import { ChatMessage } from '@/app/discover/Components/ChatMessage';
 import { ChatMessage as ChatMessageType } from '@/types/chat';
-import { ChatContextProvider } from '@/app/chat/ChatContext';
-import { TextSelectionPopover } from '@/app/chat/Components/TextSelectionPopover';
-import { SidePanelTranscriptView } from '@/app/chat/Components/SidePanelTranscriptView';
+import { ChatContextProvider } from '@/app/discover/ChatContext';
+import { TextSelectionPopover } from '@/app/discover/Components/TextSelectionPopover';
+import { SidePanelTranscriptView } from '@/app/discover/Components/SidePanelTranscriptView';
 import { Citation } from '@/types/chat';
 import { colors } from '@/lib/theme';
 import { isChatEnabled } from '@/config/organizationConfig';
@@ -116,7 +116,7 @@ export const FloatingChatDrawer = () => {
   const clearMessages = useChatStore((s) => s.clearMessages);
   const storeSetTranscriptCitation = useChatStore((s) => s.openTranscript);
 
-  const isChatPage = pathname.startsWith('/chat');
+  const isChatPage = pathname.startsWith('/discover');
   const shouldShow = isChatEnabled && !isChatPage;
   const isEmpty = messages.length === 0;
   const currentView = viewStack[viewStack.length - 1];
@@ -338,7 +338,7 @@ export const FloatingChatDrawer = () => {
               <Tooltip title="Open full chat">
                 <IconButton
                   size="small"
-                  onClick={() => window.open('/chat', '_blank')}
+                  onClick={() => window.open('/discover', '_blank')}
                   sx={{ color: colors.primary.contrastText }}>
                   <OpenInNewIcon fontSize="small" />
                 </IconButton>

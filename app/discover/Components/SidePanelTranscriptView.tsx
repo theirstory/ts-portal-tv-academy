@@ -26,7 +26,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import MuxPlayer from '@mux/mux-player-react';
 import MuxPlayerElement from '@mux/mux-player';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { useChatContext } from '@/app/chat/ChatContext';
+import { useChatContext } from '@/app/discover/ChatContext';
 import { colors } from '@/lib/theme';
 import { Transcription, Section, Word } from '@/types/transcription';
 import { TextSelectionPopover } from './TextSelectionPopover';
