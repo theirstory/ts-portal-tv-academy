@@ -9,9 +9,14 @@ import {
   AccordionSummary,
   AccordionDetails,
   CircularProgress,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import SearchIcon from '@mui/icons-material/Search';
 import MuxPlayer from '@mux/mux-player-react';
 import MuxPlayerElement from '@mux/mux-player';
 import { useChatStore } from '@/app/stores/useChatStore';
@@ -37,27 +42,35 @@ const TranscriptWord = ({
   isActive,
   isPast,
   isHighlighted,
+  isActiveMatch,
+  matchKey,
   onClick,
 }: {
   word: Word;
   isActive: boolean;
   isPast: boolean;
   isHighlighted: boolean;
+  isActiveMatch?: boolean;
+  matchKey?: string;
   onClick: () => void;
 }) => (
   <span
     onClick={onClick}
     data-start={word.start}
+    {...(matchKey ? { 'data-match-key': matchKey } : {})}
     style={{
       cursor: 'pointer',
       display: 'inline',
-      backgroundColor: isActive
+      backgroundColor: isActiveMatch
         ? colors.warning.main
-        : isHighlighted
-          ? `${colors.warning.main}40`
-          : 'transparent',
-      color: isPast && !isActive && !isHighlighted ? colors.text.secondary : colors.text.primary,
-      borderRadius: isActive ? '2px' : undefined,
+        : isActive
+          ? colors.warning.main
+          : isHighlighted
+            ? `${colors.warning.main}40`
+            : 'transparent',
+      color: isPast && !isActive && !isHighlighted && !isActiveMatch ? colors.text.secondary : colors.text.primary,
+      borderRadius: isActive || isActiveMatch ? '2px' : undefined,
+      outline: isActiveMatch ? `2px solid ${colors.primary.main}` : undefined,
       transition: 'background-color 0.1s, color 0.1s',
     }}>
     {word.text}{' '}
@@ -70,6 +83,8 @@ const TranscriptSection = ({
   currentTime,
   highlightStart,
   highlightEnd,
+  searchTerm,
+  activeMatchKey,
   isExpanded,
   onToggle,
   onWordClick,
@@ -79,11 +94,13 @@ const TranscriptSection = ({
   currentTime: number;
   highlightStart: number;
   highlightEnd: number;
+  searchTerm: string;
+  activeMatchKey: string | null;
   isExpanded: boolean;
   onToggle: () => void;
   onWordClick: (time: number) => void;
 }) => {
-  const activeWordRef = useRef<HTMLSpanElement>(null);
+  const searchLower = searchTerm.toLowerCase();
 
   return (
     <Accordion
@@ -109,16 +126,13 @@ const TranscriptSection = ({
         }}>
         <Box>
           <Typography variant="body2" fontWeight={600}>
-            {section.title}
+            {formatTimestamp(section.start)} &middot; {section.title}
           </Typography>
           {section.synopsis && (
             <Typography variant="caption" sx={{ opacity: 0.85, display: 'block', mt: 0.25 }}>
               {section.synopsis}
             </Typography>
           )}
-          <Typography variant="caption" sx={{ opacity: 0.7 }}>
-            {formatTimestamp(section.start)} · {section.speaker}
-          </Typography>
         </Box>
       </AccordionSummary>
       <AccordionDetails sx={{ px: 2, py: 1.5 }}>
@@ -130,25 +144,31 @@ const TranscriptSection = ({
                 color="text.secondary"
                 fontWeight={600}
                 sx={{ display: 'block', mb: 0.25 }}>
-                {para.speaker} · {formatTimestamp(para.start)}
+                {para.speaker} &middot; {formatTimestamp(para.start)}
               </Typography>
             )}
             <Typography variant="body2" component="div" sx={{ lineHeight: 1.8 }}>
               {para.words.map((word, wIdx) => {
-                const isActive =
+                const isPlaying =
                   currentTime >= word.start &&
                   currentTime < (para.words[wIdx + 1]?.start ?? word.end);
                 const isPast = currentTime >= word.end;
-                const isHighlighted =
+                const isCitationHighlight =
                   word.start >= highlightStart && word.end <= highlightEnd;
+                const isSearchMatch =
+                  !!searchLower && word.text.toLowerCase().includes(searchLower);
+                const matchKey = isSearchMatch ? `${sectionIndex}-${pIdx}-${wIdx}` : undefined;
+                const isActiveMatch = matchKey !== undefined && matchKey === activeMatchKey;
 
                 return (
                   <TranscriptWord
                     key={wIdx}
                     word={word}
-                    isActive={isActive}
+                    isActive={isPlaying}
                     isPast={isPast}
-                    isHighlighted={isHighlighted}
+                    isHighlighted={isCitationHighlight || isSearchMatch}
+                    isActiveMatch={isActiveMatch}
+                    matchKey={matchKey}
                     onClick={() => onWordClick(word.start)}
                   />
                 );
@@ -171,6 +191,8 @@ export const SidePanelTranscriptView = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeMatchIndex, setActiveMatchIndex] = useState(0);
   const videoRef = useRef<MuxPlayerElement>(null);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledRef = useRef(false);
@@ -261,6 +283,61 @@ export const SidePanelTranscriptView = () => {
     });
   }, []);
 
+  // Compute search matches as a flat list of word keys (sectionIdx-paraIdx-wordIdx)
+  const searchMatches = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q || !data) return [];
+    const matches: string[] = [];
+    data.transcription.sections.forEach((section, sIdx) => {
+      section.paragraphs.forEach((para, pIdx) => {
+        para.words.forEach((word, wIdx) => {
+          if (word.text.toLowerCase().includes(q)) {
+            matches.push(`${sIdx}-${pIdx}-${wIdx}`);
+          }
+        });
+      });
+    });
+    return matches;
+  }, [searchTerm, data]);
+
+  // Reset active match when search changes
+  useEffect(() => {
+    setActiveMatchIndex(0);
+  }, [searchTerm]);
+
+  const totalMatches = searchMatches.length;
+  const activeMatchKey = searchMatches[activeMatchIndex] ?? null;
+
+  // Scroll to active match
+  useEffect(() => {
+    if (!activeMatchKey || !transcriptContainerRef.current) return;
+    // Ensure the section containing the match is expanded
+    const sectionIdx = parseInt(activeMatchKey.split('-')[0], 10);
+    setExpandedSections((prev) => {
+      if (prev.has(sectionIdx)) return prev;
+      const next = new Set(prev);
+      next.add(sectionIdx);
+      return next;
+    });
+    // Scroll after expansion renders
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const el = transcriptContainerRef.current?.querySelector(`[data-match-key="${activeMatchKey}"]`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    });
+  }, [activeMatchKey]);
+
+  const goToNextMatch = useCallback(() => {
+    if (totalMatches === 0) return;
+    setActiveMatchIndex((prev) => (prev + 1) % totalMatches);
+  }, [totalMatches]);
+
+  const goToPrevMatch = useCallback(() => {
+    if (totalMatches === 0) return;
+    setActiveMatchIndex((prev) => (prev - 1 + totalMatches) % totalMatches);
+  }, [totalMatches]);
+
   if (!transcriptCitation) return null;
 
   const backLabel = previousMode === 'search' ? 'Back to results' : 'Back to source';
@@ -321,6 +398,77 @@ export const SidePanelTranscriptView = () => {
             />
           </Box>
 
+          {/* Search field with navigation */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 1.5, py: 0.75, flexShrink: 0, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="Search transcript..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.shiftKey) goToPrevMatch();
+                  else goToNextMatch();
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchTerm.trim() && totalMatches > 0 ? (
+                  <InputAdornment position="end">
+                    <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap', mr: 0.5 }}>
+                      {activeMatchIndex + 1}/{totalMatches}
+                    </Typography>
+                  </InputAdornment>
+                ) : searchTerm.trim() ? (
+                  <InputAdornment position="end">
+                    <Typography variant="caption" color="text.secondary">
+                      0
+                    </Typography>
+                  </InputAdornment>
+                ) : null,
+              }}
+              sx={{ bgcolor: colors.background.default, borderRadius: '8px' }}
+            />
+            <Box
+              component="button"
+              onClick={goToPrevMatch}
+              disabled={totalMatches === 0}
+              sx={{
+                border: 'none',
+                bgcolor: 'transparent',
+                cursor: totalMatches > 0 ? 'pointer' : 'default',
+                opacity: totalMatches > 0 ? 1 : 0.3,
+                p: 0.5,
+                borderRadius: 1,
+                display: 'flex',
+                '&:hover': totalMatches > 0 ? { bgcolor: colors.grey[100] } : {},
+              }}>
+              <KeyboardArrowUpIcon fontSize="small" />
+            </Box>
+            <Box
+              component="button"
+              onClick={goToNextMatch}
+              disabled={totalMatches === 0}
+              sx={{
+                border: 'none',
+                bgcolor: 'transparent',
+                cursor: totalMatches > 0 ? 'pointer' : 'default',
+                opacity: totalMatches > 0 ? 1 : 0.3,
+                p: 0.5,
+                borderRadius: 1,
+                display: 'flex',
+                '&:hover': totalMatches > 0 ? { bgcolor: colors.grey[100] } : {},
+              }}>
+              <KeyboardArrowDownIcon fontSize="small" />
+            </Box>
+          </Box>
+
           {/* Transcript */}
           <Box ref={transcriptContainerRef} sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
             {data.transcription.sections.map((section, idx) => (
@@ -331,6 +479,8 @@ export const SidePanelTranscriptView = () => {
                 currentTime={currentTime}
                 highlightStart={highlightStart}
                 highlightEnd={highlightEnd}
+                searchTerm={searchTerm}
+                activeMatchKey={activeMatchKey}
                 isExpanded={expandedSections.has(idx)}
                 onToggle={() => toggleSection(idx)}
                 onWordClick={handleWordClick}
