@@ -9,6 +9,8 @@ import {
   Typography,
   Tooltip,
   Button,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CloseIcon from '@mui/icons-material/Close';
@@ -20,10 +22,15 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SearchIcon from '@mui/icons-material/Search';
 import DescriptionIcon from '@mui/icons-material/Description';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import FolderIcon from '@mui/icons-material/Folder';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import MuxPlayer from '@mux/mux-player-react';
 import { usePathname } from 'next/navigation';
 import { useChatStore } from '@/app/stores/useChatStore';
 import { ChatMessage } from '@/app/chat/Components/ChatMessage';
+import { ChatMessage as ChatMessageType } from '@/types/chat';
 import { ChatContextProvider } from '@/app/chat/ChatContext';
 import { TextSelectionPopover } from '@/app/chat/Components/TextSelectionPopover';
 import { SidePanelTranscriptView } from '@/app/chat/Components/SidePanelTranscriptView';
@@ -97,9 +104,11 @@ export const FloatingChatDrawer = () => {
   const [searchType, setSearchType] = useState<SearchType>('hybrid');
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [sourcesCitations, setSourcesCitations] = useState<Citation[]>([]);
+  const [sourcesListMode, setSourcesListMode] = useState<'recording' | 'number'>('number');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pairRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
@@ -202,6 +211,27 @@ export const FloatingChatDrawer = () => {
       return next;
     });
   };
+
+  // Group messages into Q&A pairs
+  type QAPair = { userMsg: ChatMessageType; assistantMsg: ChatMessageType };
+  const pairs = useMemo<QAPair[]>(() => {
+    const result: QAPair[] = [];
+    for (let i = 0; i < messages.length; i += 2) {
+      if (messages[i]?.role === 'user' && messages[i + 1]?.role === 'assistant') {
+        result.push({ userMsg: messages[i], assistantMsg: messages[i + 1] });
+      }
+    }
+    return result;
+  }, [messages]);
+
+  const navigateToPair = useCallback((pairIndex: number) => {
+    const pair = pairs[pairIndex];
+    if (!pair) return;
+    const el = pairRefs.current.get(pair.userMsg.id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [pairs]);
 
   if (!shouldShow) return null;
 
@@ -562,7 +592,7 @@ export const FloatingChatDrawer = () => {
                 </Button>
               </Box>
 
-              {/* Sources header */}
+              {/* Sources header with toggle */}
               <Box
                 sx={{
                   display: 'flex',
@@ -576,78 +606,65 @@ export const FloatingChatDrawer = () => {
                   flexShrink: 0,
                 }}>
                 <FormatListBulletedIcon sx={{ fontSize: 18, color: colors.text.secondary }} />
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>
                   {sourcesCitations.length} source{sourcesCitations.length !== 1 ? 's' : ''}
                 </Typography>
+                <ToggleButtonGroup
+                  size="small"
+                  exclusive
+                  value={sourcesListMode}
+                  onChange={(_, val) => { if (val) setSourcesListMode(val); }}
+                  sx={{ height: 26 }}>
+                  <ToggleButton value="number" sx={{ px: 0.75, py: 0, textTransform: 'none' }}>
+                    <Tooltip title="Sort by citation number">
+                      <FormatListNumberedIcon sx={{ fontSize: 16 }} />
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="recording" sx={{ px: 0.75, py: 0, textTransform: 'none' }}>
+                    <Tooltip title="Group by recording">
+                      <FolderIcon sx={{ fontSize: 16 }} />
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
               </Box>
 
               {/* Scrollable sources */}
               <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-                {groupByRecording(sourcesCitations).map((group) => {
-                  const playbackId = getMuxPlaybackId(group.videoUrl);
-                  const thumbnailUrl = playbackId && !group.isAudioFile
-                    ? `https://image.mux.com/${playbackId}/thumbnail.jpg?width=320&height=180&fit_mode=crop`
-                    : null;
-                  const isCollapsed = collapsed.has(group.theirstoryId);
-
-                  return (
-                    <Box key={group.theirstoryId} sx={{ borderBottom: '2px solid', borderColor: 'divider' }}>
+                {sourcesListMode === 'number' ? (
+                  // Numbered view — sorted by citation index with thumbnails
+                  [...sourcesCitations].sort((a, b) => a.index - b.index).map((citation) => {
+                    const playbackId = getMuxPlaybackId(citation.videoUrl);
+                    const thumbnailUrl = playbackId && !citation.isAudioFile
+                      ? `https://image.mux.com/${playbackId}/thumbnail.jpg?width=320&height=180&fit_mode=crop&time=${Math.floor(citation.startTime)}`
+                      : null;
+                    return (
                       <Box
-                        onClick={() => toggleCollapse(group.theirstoryId)}
+                        key={`num-${citation.index}`}
+                        onClick={() => handleCitationClick(citation)}
                         sx={{
                           display: 'flex',
-                          alignItems: 'center',
                           gap: 1.5,
                           px: 2,
-                          py: 1.5,
-                          bgcolor: colors.grey[50],
+                          py: 1.25,
                           cursor: 'pointer',
                           borderBottom: '1px solid',
                           borderColor: 'divider',
-                          '&:hover': { bgcolor: colors.grey[100] },
+                          borderLeft: `3px solid ${citation.isChapterSynopsis ? colors.success.main : colors.primary.main}`,
+                          '&:hover': { bgcolor: colors.grey[50] },
+                          transition: 'background-color 0.15s',
                         }}>
-                        <ExpandMoreIcon
-                          sx={{
-                            fontSize: 20,
-                            transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-                            transition: 'transform 0.2s',
-                            flexShrink: 0,
-                          }}
-                        />
                         {thumbnailUrl ? (
                           <Box
                             component="img"
                             src={thumbnailUrl}
-                            alt={group.interviewTitle}
-                            sx={{ width: 48, aspectRatio: '16/9', objectFit: 'cover', borderRadius: 1, bgcolor: colors.grey[200], flexShrink: 0 }}
+                            alt={citation.interviewTitle}
+                            sx={{ width: 48, aspectRatio: '16/9', objectFit: 'cover', borderRadius: 1, bgcolor: colors.grey[200], flexShrink: 0, alignSelf: 'flex-start', mt: 0.25 }}
                           />
                         ) : (
-                          <Box sx={{ width: 48, aspectRatio: '16/9', bgcolor: colors.grey[200], borderRadius: 1, flexShrink: 0 }} />
+                          <Box sx={{ width: 48, aspectRatio: '16/9', bgcolor: colors.grey[200], borderRadius: 1, flexShrink: 0, alignSelf: 'flex-start', mt: 0.25 }} />
                         )}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3, fontSize: '0.8rem' }}>
-                            {group.interviewTitle}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {group.results.length} source{group.results.length !== 1 ? 's' : ''}
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      {!isCollapsed && group.results.map((citation, idx) => (
-                        <Box
-                          key={`${citation.startTime}-${idx}`}
-                          onClick={() => handleCitationClick(citation)}
-                          sx={{
-                            pl: 2,
-                            pr: 2,
-                            py: 1.25,
-                            cursor: 'pointer',
-                            borderLeft: `3px solid ${citation.isChapterSynopsis ? colors.success.main : colors.primary.main}`,
-                            '&:hover': { bgcolor: colors.grey[50] },
-                            transition: 'background-color 0.15s',
-                          }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.25 }}>
                             <Box
                               sx={{
                                 display: 'inline-flex',
@@ -664,11 +681,13 @@ export const FloatingChatDrawer = () => {
                               }}>
                               {citation.index}
                             </Box>
-                            <Typography variant="caption" color="text.secondary">
-                              {citation.isChapterSynopsis ? 'Chapter Summary' : citation.speaker}
-                              {' · '}
-                              {citation.sectionTitle}
-                              {' · '}
+                            <Typography variant="caption" color="text.secondary" sx={{ flex: 1, minWidth: 0 }} noWrap>
+                              {citation.isChapterSynopsis
+                                ? <>{citation.interviewTitle} &middot; {citation.sectionTitle}</>
+                                : <>{citation.speaker} &middot; {citation.sectionTitle}</>
+                              }
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
                               {formatTime(citation.startTime)}–{formatTime(citation.endTime)}
                             </Typography>
                           </Box>
@@ -686,10 +705,119 @@ export const FloatingChatDrawer = () => {
                             &ldquo;{citation.transcription}&rdquo;
                           </Typography>
                         </Box>
-                      ))}
-                    </Box>
-                  );
-                })}
+                      </Box>
+                    );
+                  })
+                ) : (
+                  // Recording-grouped view
+                  groupByRecording(sourcesCitations).map((group) => {
+                    const playbackId = getMuxPlaybackId(group.videoUrl);
+                    const thumbnailUrl = playbackId && !group.isAudioFile
+                      ? `https://image.mux.com/${playbackId}/thumbnail.jpg?width=320&height=180&fit_mode=crop`
+                      : null;
+                    const isCollapsed = collapsed.has(group.theirstoryId);
+
+                    return (
+                      <Box key={group.theirstoryId} sx={{ borderBottom: '2px solid', borderColor: 'divider' }}>
+                        <Box
+                          onClick={() => toggleCollapse(group.theirstoryId)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            px: 2,
+                            py: 1.5,
+                            bgcolor: colors.grey[50],
+                            cursor: 'pointer',
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            '&:hover': { bgcolor: colors.grey[100] },
+                          }}>
+                          <ExpandMoreIcon
+                            sx={{
+                              fontSize: 20,
+                              transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                              transition: 'transform 0.2s',
+                              flexShrink: 0,
+                            }}
+                          />
+                          {thumbnailUrl ? (
+                            <Box
+                              component="img"
+                              src={thumbnailUrl}
+                              alt={group.interviewTitle}
+                              sx={{ width: 48, aspectRatio: '16/9', objectFit: 'cover', borderRadius: 1, bgcolor: colors.grey[200], flexShrink: 0 }}
+                            />
+                          ) : (
+                            <Box sx={{ width: 48, aspectRatio: '16/9', bgcolor: colors.grey[200], borderRadius: 1, flexShrink: 0 }} />
+                          )}
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3, fontSize: '0.8rem' }}>
+                              {group.interviewTitle}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {group.results.length} source{group.results.length !== 1 ? 's' : ''}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {!isCollapsed && group.results.map((citation, idx) => (
+                          <Box
+                            key={`${citation.startTime}-${idx}`}
+                            onClick={() => handleCitationClick(citation)}
+                            sx={{
+                              pl: 2,
+                              pr: 2,
+                              py: 1.25,
+                              cursor: 'pointer',
+                              borderLeft: `3px solid ${citation.isChapterSynopsis ? colors.success.main : colors.primary.main}`,
+                              '&:hover': { bgcolor: colors.grey[50] },
+                              transition: 'background-color 0.15s',
+                            }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                              <Box
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  bgcolor: citation.isChapterSynopsis ? colors.success.main : colors.primary.main,
+                                  color: colors.primary.contrastText,
+                                  fontSize: '0.65rem',
+                                  fontWeight: 700,
+                                  borderRadius: '4px',
+                                  px: 0.5,
+                                  minWidth: 18,
+                                  lineHeight: 1.4,
+                                }}>
+                                {citation.index}
+                              </Box>
+                              <Typography variant="caption" color="text.secondary">
+                                {citation.isChapterSynopsis ? 'Chapter Summary' : citation.speaker}
+                                {' · '}
+                                {citation.sectionTitle}
+                                {' · '}
+                                {formatTime(citation.startTime)}–{formatTime(citation.endTime)}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="body2"
+                              color="text.primary"
+                              sx={{
+                                mt: 0.5,
+                                lineHeight: 1.5,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                              }}>
+                              &ldquo;{citation.transcription}&rdquo;
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    );
+                  })
+                )}
               </Box>
             </Box>
           )}
@@ -749,8 +877,83 @@ export const FloatingChatDrawer = () => {
                   </Box>
                 ) : (
                   <Box sx={{ px: 2, py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {messages.map((message) => (
-                      <ChatMessage key={message.id} message={message} />
+                    {pairs.map((pair, pairIndex) => (
+                      <Box
+                        key={pair.userMsg.id}
+                        ref={(el: HTMLDivElement | null) => {
+                          if (el) pairRefs.current.set(pair.userMsg.id, el);
+                          else pairRefs.current.delete(pair.userMsg.id);
+                        }}>
+                        {/* Sticky user prompt */}
+                        <Box
+                          sx={{
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 10,
+                            pt: 1,
+                            pb: 0.5,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                          }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end', width: '100%' }}>
+                            {pairs.length > 1 && (
+                              <Box sx={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                                <IconButton
+                                  size="small"
+                                  disabled={pairIndex === 0}
+                                  onClick={() => navigateToPair(pairIndex - 1)}
+                                  sx={{ p: 0, color: colors.text.secondary, '&:hover': { color: colors.primary.main } }}>
+                                  <KeyboardArrowUpIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  disabled={pairIndex === pairs.length - 1}
+                                  onClick={() => navigateToPair(pairIndex + 1)}
+                                  sx={{ p: 0, color: colors.text.secondary, '&:hover': { color: colors.primary.main } }}>
+                                  <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Box>
+                            )}
+                            <Box
+                              sx={{
+                                maxWidth: '85%',
+                                px: 1.5,
+                                py: 0.75,
+                                borderRadius: 2,
+                                bgcolor: colors.primary.main,
+                                color: colors.primary.contrastText,
+                                fontSize: '0.8rem',
+                                lineHeight: 1.5,
+                                boxShadow: `0 2px 8px ${colors.common.shadow}`,
+                              }}>
+                              {pair.userMsg.content}
+                            </Box>
+                          </Box>
+                          {pair.assistantMsg.citations && pair.assistantMsg.citations.length > 0 && (
+                            <Button
+                              size="small"
+                              startIcon={<FormatListBulletedIcon sx={{ fontSize: 14 }} />}
+                              onClick={() => handleViewSources(pair.assistantMsg.citations!)}
+                              sx={{
+                                textTransform: 'none',
+                                fontSize: '0.7rem',
+                                color: colors.text.secondary,
+                                py: 0.25,
+                                px: 1,
+                                minHeight: 0,
+                                mt: 0.5,
+                                '&:hover': { color: colors.primary.main },
+                              }}>
+                              View {pair.assistantMsg.citations.length} sources
+                            </Button>
+                          )}
+                        </Box>
+                        {/* Assistant response */}
+                        <Box sx={{ pt: 1 }}>
+                          <ChatMessage message={pair.assistantMsg} />
+                        </Box>
+                      </Box>
                     ))}
                     <div ref={messagesEndRef} />
                   </Box>

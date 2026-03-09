@@ -538,7 +538,7 @@ export const SidePanelRecordingView = () => {
   const videoRef = useRef<MuxPlayerElement>(null);
   const hasSiblings = activeCitationSiblings.length > 1;
   const [filterTerm, setFilterTerm] = useState('');
-  const [listMode, setListMode] = useState<'recording' | 'number'>('recording');
+  const [listMode, setListMode] = useState<'recording' | 'number'>('number');
 
   // Sync video time when active citation changes
   useEffect(() => {
