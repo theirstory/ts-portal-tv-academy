@@ -112,6 +112,7 @@ export const FloatingChatDrawer = () => {
 
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
+  const streamingStatus = useChatStore((s) => s.streamingStatus);
   const sendMessage = useChatStore((s) => s.sendMessage);
   const clearMessages = useChatStore((s) => s.clearMessages);
   const storeSetTranscriptCitation = useChatStore((s) => s.openTranscript);
@@ -951,7 +952,28 @@ export const FloatingChatDrawer = () => {
                         </Box>
                         {/* Assistant response */}
                         <Box sx={{ pt: 1 }}>
-                          <ChatMessage message={pair.assistantMsg} />
+                          {isStreaming && !pair.assistantMsg.content && streamingStatus ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1 }}>
+                              <Box
+                                sx={{
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: '50%',
+                                  border: '2px solid',
+                                  borderColor: 'primary.main',
+                                  borderTopColor: 'transparent',
+                                  animation: 'spin 0.8s linear infinite',
+                                  flexShrink: 0,
+                                  '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
+                                }}
+                              />
+                              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                                {streamingStatus}
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <ChatMessage message={pair.assistantMsg} />
+                          )}
                         </Box>
                       </Box>
                     ))}

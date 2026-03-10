@@ -26,6 +26,7 @@ export type ChatRequest = {
 };
 
 export type ChatStreamChunk =
+  | { type: 'status'; status: string }
   | { type: 'citations'; citations: Citation[] }
   | { type: 'text'; content: string }
   | { type: 'done' };

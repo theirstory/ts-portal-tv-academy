@@ -35,6 +35,10 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function sseEvent(data: Record<string, unknown>): string {
+  return `data: ${JSON.stringify(data)}\n\n`;
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ChatRequest;
@@ -44,51 +48,54 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    const [chunkCitations, synopses] = await Promise.all([
-      retrieveChunksForChat(query, 20),
-      retrieveAllChapterSynopses(),
-    ]);
-
-    // Convert synopses to citations and merge with chunk citations
-    const synopsisCitations: Citation[] = synopses.map((s) => ({
-      index: 0, // will be re-indexed below
-      transcription: s.synopsis,
-      speaker: '',
-      interviewTitle: s.interviewTitle,
-      sectionTitle: s.sectionTitle,
-      startTime: s.startTime,
-      endTime: s.endTime,
-      theirstoryId: s.theirstoryId,
-      videoUrl: s.videoUrl,
-      isAudioFile: s.isAudioFile,
-      isChapterSynopsis: true,
-    }));
-
-    // Transcript excerpts first, then chapter summaries, all numbered sequentially
-    const allCitations = [...chunkCitations, ...synopsisCitations].map((c, i) => ({
-      ...c,
-      index: i + 1,
-    }));
-
-    const systemPrompt = buildSystemPrompt(allCitations);
-
-    // Send all citations to the client but track which are chunks for display
-    const citations = allCitations;
-
-    const anthropicMessages = messages.map((m) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }));
-
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        // Send citations first so client can render chips during streaming
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: 'citations', citations })}\n\n`),
-        );
-
         try {
+          // Phase 1: Search the archive
+          controller.enqueue(encoder.encode(sseEvent({ type: 'status', status: 'Searching the archive...' })));
+
+          const [chunkCitations, synopses] = await Promise.all([
+            retrieveChunksForChat(query, 20),
+            retrieveAllChapterSynopses(),
+          ]);
+
+          // Phase 2: Preparing sources
+          controller.enqueue(encoder.encode(sseEvent({ type: 'status', status: 'Gathering sources...' })));
+
+          const synopsisCitations: Citation[] = synopses.map((s) => ({
+            index: 0,
+            transcription: s.synopsis,
+            speaker: '',
+            interviewTitle: s.interviewTitle,
+            sectionTitle: s.sectionTitle,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            theirstoryId: s.theirstoryId,
+            videoUrl: s.videoUrl,
+            isAudioFile: s.isAudioFile,
+            isChapterSynopsis: true,
+          }));
+
+          const allCitations = [...chunkCitations, ...synopsisCitations].map((c, i) => ({
+            ...c,
+            index: i + 1,
+          }));
+
+          const systemPrompt = buildSystemPrompt(allCitations);
+          const citations = allCitations;
+
+          // Send citations to client
+          controller.enqueue(encoder.encode(sseEvent({ type: 'citations', citations })));
+
+          // Phase 3: Generating response
+          controller.enqueue(encoder.encode(sseEvent({ type: 'status', status: 'Generating response...' })));
+
+          const anthropicMessages = messages.map((m) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          }));
+
           const anthropicStream = anthropic.messages.stream({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 2048,
@@ -102,26 +109,18 @@ export async function POST(request: Request) {
               event.delta.type === 'text_delta'
             ) {
               controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ type: 'text', content: event.delta.text })}\n\n`,
-                ),
+                encoder.encode(sseEvent({ type: 'text', content: event.delta.text })),
               );
             }
           }
 
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`),
-          );
+          controller.enqueue(encoder.encode(sseEvent({ type: 'done' })));
         } catch (err) {
           console.error('Anthropic streaming error:', err);
           controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: 'text', content: 'Sorry, an error occurred while generating the response.' })}\n\n`,
-            ),
+            encoder.encode(sseEvent({ type: 'text', content: 'Sorry, an error occurred while generating the response.' })),
           );
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`),
-          );
+          controller.enqueue(encoder.encode(sseEvent({ type: 'done' })));
         }
 
         controller.close();
@@ -131,8 +130,9 @@ export async function POST(request: Request) {
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
       },
     });
   } catch (error) {

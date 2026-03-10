@@ -8,6 +8,7 @@ type SearchType = 'bm25' | 'vector' | 'hybrid';
 type ChatStore = {
   messages: ChatMessage[];
   isStreaming: boolean;
+  streamingStatus: string | null;
   sidePanelMode: SidePanelMode;
   activeCitation: Citation | null;
   searchResults: Citation[];
@@ -50,6 +51,7 @@ export const useChatStore = create<ChatStore>()(
     (set, get) => ({
       messages: [],
       isStreaming: false,
+      streamingStatus: null,
       sidePanelMode: 'hidden',
       activeCitation: null,
       searchResults: [],
@@ -132,7 +134,9 @@ export const useChatStore = create<ChatStore>()(
               try {
                 const chunk = JSON.parse(trimmed.slice(6)) as ChatStreamChunk;
 
-                if (chunk.type === 'citations') {
+                if (chunk.type === 'status') {
+                  set({ streamingStatus: chunk.status }, false, 'sendMessage:status');
+                } else if (chunk.type === 'citations') {
                   citations = chunk.citations;
                 } else if (chunk.type === 'text') {
                   set(
@@ -146,7 +150,7 @@ export const useChatStore = create<ChatStore>()(
                           citations,
                         };
                       }
-                      return { messages: msgs };
+                      return { messages: msgs, streamingStatus: null };
                     },
                     false,
                     'sendMessage:text',
@@ -211,6 +215,7 @@ export const useChatStore = create<ChatStore>()(
                       return {
                         messages: msgs,
                         isStreaming: false,
+                        streamingStatus: null,
                         ...(firstCitation
                           ? {
                               activeCitation: firstCitation,
@@ -235,7 +240,7 @@ export const useChatStore = create<ChatStore>()(
           }
 
           // In case we never got a 'done' event
-          set({ isStreaming: false }, false, 'sendMessage:streamEnd');
+          set({ isStreaming: false, streamingStatus: null }, false, 'sendMessage:streamEnd');
         } catch (error) {
           console.error('Chat error:', error);
           set(
@@ -248,7 +253,7 @@ export const useChatStore = create<ChatStore>()(
                   content: 'Sorry, something went wrong. Please try again.',
                 };
               }
-              return { messages: msgs, isStreaming: false };
+              return { messages: msgs, isStreaming: false, streamingStatus: null };
             },
             false,
             'sendMessage:error',
@@ -334,6 +339,7 @@ export const useChatStore = create<ChatStore>()(
           {
             messages: [],
             isStreaming: false,
+            streamingStatus: null,
             sidePanelMode: 'hidden',
             activeCitation: null,
             searchResults: [],
