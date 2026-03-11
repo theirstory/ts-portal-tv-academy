@@ -39,21 +39,22 @@ A complete system to archive, process, and search video/audio interviews with th
 
 ## 🚀 Quick Start
 
+### Get started in 4 easy steps
+
 ```bash
-# 1. Clone and configure
-git clone git@github.com:theirstory/portals.git
-cd portals
+# 1. Clone the repository
+git clone https://github.com/theirstory/ts-portal.git
+cd ts-portal
 
-cp config.example.json config.json
-# Edit config.json with your organization details
-
+# 2. Copy config and env files from example
+cp config.example.json config.json # Edit config.json with your organization details
 cp .env.example .env.local
 cp nlp-processor/.env.example nlp-processor/.env
 
-# 2. Start services
+# 3. Start services
 docker compose --profile local up
 
-# 3. Open in browser
+# 4. Open in browser
 open http://localhost:3000
 ```
 
@@ -77,23 +78,15 @@ Default embedding model is `sentence-transformers/multi-qa-mpnet-base-dot-v1` (o
 
 If you have interviews already uploaded to TheirStory, you can easily obtain the JSON files:
 
-1. Navigate to https://lab.theirstory.io/ts-api-core-demo/v022/
+1. Navigate to https://lab.theirstory.io/ts-api-core-demo/v028/
 2. Log in with your TheirStory username and password
 3. Download the JSON files for your interviews
 
 ### Importing the Data
 
-```bash
-# 1. Add your collection subfolders and interview JSON files under:
-json/interviews/
+Recommended approach: create one subfolder per collection with a `collection.json` file and place interview JSON files inside each folder.
 
-# 2. Manual import
-docker compose run --rm weaviate-init
-```
-
-Recommended approach: create one subfolder per collection and place interview JSON files inside each folder.
-
-If you place JSON files directly under `json/interviews/` (without subfolder), they are imported into the `default` collection.
+You can use `json/interviews/example-collection/collection.json` as a copy-paste template for new collections.
 
 Example:
 
@@ -107,11 +100,21 @@ json/interviews/
     └── interview-2.json
 ```
 
-See `json/interviews/README.md` and `docs/IMPORTING_INTERVIEWS.md` for full details.
+Note: If needed, you can skip subfolders: JSON files placed directly under `json/interviews/` are imported into the `default` collection.
+
+```bash
+# 1. Add your collection subfolders and interview JSON files under:
+json/interviews/
+
+# 2. Open a new terminal in the ts-portal root folder and run the manual import
+docker compose run --rm weaviate-init
+```
+
+See [docs/IMPORTING_INTERVIEWS.md](./docs/IMPORTING_INTERVIEWS.md) for full details.
 
 **Process:**
 
-1. Hybrid chunking (~30s + sentence boundaries)
+1. Hybrid chunking
 2. Embedding generation
 3. NER extraction (people, places, organizations, etc.)
 4. Storage in Weaviate with vectors
@@ -140,11 +143,12 @@ On the server terminal (remote host):
 ```bash
 # Install git and clone repo (one time)
 sudo apt update && sudo apt install -y git
-git clone git@github.com:theirstory/ts-portal.git
+git clone https://github.com/theirstory/ts-portal.git
 cd ts-portal
 
 # Install Docker once (Ubuntu)
 sudo bash scripts/deploy/setup-docker-ubuntu.sh
+# If prompted about /etc/ssh/sshd_config, choose: keep the local version currently installed
 
 # Deploy/update
 ./scripts/deploy/deploy-prod.sh
@@ -229,7 +233,7 @@ See [docs/COMMANDS.md](./docs/COMMANDS.md) for the complete list.
 ## 📁 Project Structure
 
 ```
-portals/
+ts-portal/
 ├── app/                    # Next.js application
 │   ├── story/[storyUuid]/  # Interview detail pages
 │   ├── stores/             # Zustand state management
