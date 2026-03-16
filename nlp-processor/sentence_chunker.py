@@ -1,13 +1,10 @@
-"""Sentence-based chunking utilities built on top of TheirStory documents."""
+"""Sentence-based chunking utilities built on top of parsed transcript documents."""
 
 from __future__ import annotations
 
 from typing import Any, Dict, List, Sequence, Tuple
 
-import spacy
 from spacy.tokens import Span, Token
-
-from functools import lru_cache
 
 from config import Config
 from spacy_models import get_en_sentence_nlp
@@ -95,7 +92,7 @@ def chunk_doc_sections(
     sentence_chunk_size: int,
     overlap_sentences: int,
 ) -> List[Dict[str, Any]]:
-    """Chunk TheirStory sections/paragraphs by sentence windows with overlap."""
+    """Chunk parsed sections and paragraphs by sentence windows with overlap."""
     sentence_nlp = get_en_sentence_nlp()
     chunks: List[Dict[str, Any]] = []
     global_chunk_id = 0

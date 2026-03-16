@@ -42,9 +42,9 @@ Text chunking utilities for sentence-based segmentation.
 
 ### `pipeline.py`
 
-TheirStory document parsing pipeline.
+Transcript parsing pipeline.
 
-- `TheirStory`: Builds a structured spaCy `Doc` with sections, paragraphs, token timing, and entity timing support
+- `TheirStoryTranscriptParser`: Builds a structured spaCy `Doc` with sections, paragraphs, and token timing metadata
 
 ### `transformers.py`
 
@@ -69,6 +69,7 @@ Weaviate database operations.
 FastAPI application with endpoints.
 
 - `POST /process-story`: Main processing endpoint
+- `POST /embed`: Generate a local embedding with the configured SentenceTransformer model
 - `GET /health`: Health check endpoint
 
 ## Environment Variables
@@ -78,13 +79,14 @@ See `.env.example` for all available configuration options:
 - **Weaviate**: `WEAVIATE_HOST_URL`, `WEAVIATE_PORT`, `WEAVIATE_SECURE`
 - **Chunking**: `SENTENCE_CHUNK_SIZE`, `SENTENCE_OVERLAP`
 - **NER**: `NER_LABELS`, `GLINER_MODEL`, `GLINER_THRESHOLD`, `MIN_TEXT_LENGTH_FOR_NER`
+- **Embeddings**: `EMBEDDING_MODEL`, `EMBEDDING_LOAD_TIMEOUT_SECONDS`, `USE_GPU`
 - **Config**: `CONFIG_PATH`
 
 ## Processing Flow
 
 1. **API Request** → Receives story payload
 2. **Transform** → Convert API format to sections structure
-3. **Parse** → Build a TheirStory document with sections and paragraphs
+3. **Parse** → Build a structured transcript document with sections and paragraphs
 4. **Chunk** → Split paragraphs into sentence-based chunks with overlap
 5. **NER** → Extract named entities from transcript batches
 6. **Consolidate** → Attach entity overlap data to chunks and testimony

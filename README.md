@@ -10,7 +10,7 @@ A complete system to archive, process, and search video/audio interviews with th
 
 - **Semantic Search**: Vector search with local embeddings (no external APIs)
 - **Automatic NER**: Entity extraction with GLiNER (zero-shot, multilingual)
-- **Hybrid Chunking**: Intelligent time-based + sentence boundary segmentation
+- **Sentence Chunking**: Sentence-based chunking with configurable overlap
 - **Multi-format**: Video and audio with synchronized transcriptions
 - **Live Highlighting**: Entities highlighted with clickable timestamps
 - **Multi-organization**: Centralized configuration system
@@ -23,7 +23,7 @@ A complete system to archive, process, and search video/audio interviews with th
 - Weaviate (vector database)
 - FastAPI (Python 3.11)
 - GLiNER multi-v2.1 (NER)
-- Sentence Transformers (embeddings 384-dim)
+- Sentence Transformers LaBSE (local embeddings)
 
 **Frontend:**
 
@@ -60,11 +60,11 @@ open http://localhost:3000
 
 **Important:** Edit `config.json` to customize your portal with organization name, branding colors, logos, and NER entity labels. See [CONFIGURATION.md](./CONFIGURATION.md) for all configuration options.
 
-**First time:** ~2 minutes (downloads models ~400MB). Subsequent: ~30 seconds.
+**First time:** may take several minutes while GLiNER / embedding / spaCy models download. Subsequent runs are much faster thanks to cache reuse.
 
 ## NLP Environment Notes
 
-Default embedding model is `sentence-transformers/multi-qa-mpnet-base-dot-v1` (optimized for English semantic search, 768-dim). If model loading fails or is too heavy, use `sentence-transformers/all-MiniLM-L6-v2` as a lighter fallback.
+Default embedding model is `sentence-transformers/LaBSE`. NER uses `urchade/gliner_multi-v2.1`. Chunking is sentence-based with configurable sentence overlap.
 
 **Services:**
 
@@ -114,7 +114,7 @@ See [docs/IMPORTING_INTERVIEWS.md](./docs/IMPORTING_INTERVIEWS.md) for full deta
 
 **Process:**
 
-1. Hybrid chunking
+1. Sentence-based chunking
 2. Embedding generation
 3. NER extraction (people, places, organizations, etc.)
 4. Storage in Weaviate with vectors
@@ -251,8 +251,9 @@ ts-portal/
 ├── lib/                    # Libraries (Weaviate, theme)
 ├── nlp-processor/          # Python NLP service
 │   ├── main.py             # FastAPI application
-│   ├── chunker.py          # Hybrid chunking algorithm
+│   ├── sentence_chunker.py # Sentence-based chunking algorithm
 │   ├── ner_processor.py    # GLiNER NER extraction
+│   ├── embedding_service.py# Local SentenceTransformer embeddings
 │   └── weaviate_client.py  # Weaviate batch operations
 ├── scripts/                # Import and schema scripts
 ├── types/                  # TypeScript type definitions

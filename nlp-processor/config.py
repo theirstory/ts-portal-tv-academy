@@ -43,7 +43,7 @@ class Config:
     # HuggingFace Local Embeddings Configuration
     EMBEDDING_MODEL = os.getenv(
         "EMBEDDING_MODEL",
-        "sentence-transformers/multi-qa-mpnet-base-dot-v1",
+        "sentence-transformers/LaBSE",
     )
     USE_GPU = os.getenv("USE_GPU", "false").lower() == "true"
     EMBEDDING_LOAD_TIMEOUT_SECONDS = int(
