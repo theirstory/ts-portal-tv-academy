@@ -5,7 +5,7 @@ import { Box, Tooltip } from '@mui/material';
 import { darken } from '@mui/material/styles';
 import { Citation } from '@/types/chat';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { useChatContext } from '@/app/discover/ChatContext';
+import { useChatInteraction } from '@/app/discover/ChatInteractionContext';
 import { colors } from '@/lib/theme';
 
 type Props = {
@@ -25,7 +25,7 @@ export const ChatCitationChip = ({ citation, siblings, messageId }: Props) => {
   const setHoveredCitationIndex = useChatStore((s) => s.setHoveredCitationIndex);
   const hoveredCitationIndex = useChatStore((s) => s.hoveredCitationIndex);
   const activeAssistantMessageId = useChatStore((s) => s.activeAssistantMessageId);
-  const { onCitationClick } = useChatContext();
+  const { onCitationClick } = useChatInteraction();
 
   // Only highlight if this chip belongs to the active assistant message (or no scoping)
   const isHighlighted = hoveredCitationIndex === citation.index &&

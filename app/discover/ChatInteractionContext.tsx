@@ -5,7 +5,7 @@ import { Citation } from '@/types/chat';
 
 type SearchType = 'bm25' | 'vector' | 'hybrid';
 
-type ChatContextValue = {
+type ChatInteractionContextValue = {
   /** Override citation click behavior */
   onCitationClick?: (citation: Citation) => void;
   /** Override search results handler */
@@ -18,14 +18,14 @@ type ChatContextValue = {
   onViewSources?: (citations: Citation[]) => void;
 };
 
-const ChatContext = createContext<ChatContextValue>({});
+const ChatInteractionContext = createContext<ChatInteractionContextValue>({});
 
-export const ChatContextProvider = ({
+export const ChatInteractionProvider = ({
   value,
   children,
 }: {
-  value: ChatContextValue;
+  value: ChatInteractionContextValue;
   children: React.ReactNode;
-}) => <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+}) => <ChatInteractionContext.Provider value={value}>{children}</ChatInteractionContext.Provider>;
 
-export const useChatContext = () => useContext(ChatContext);
+export const useChatInteraction = () => useContext(ChatInteractionContext);

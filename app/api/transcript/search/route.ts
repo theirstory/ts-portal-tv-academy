@@ -1,5 +1,6 @@
 import { SchemaTypes, Chunks } from '@/types/weaviate';
 import { vectorSearchForStoryId, bm25SearchForStoryId } from '@/lib/weaviate/search';
+import type { QueryProperty } from 'weaviate-client';
 
 type ThematicMatch = {
   transcription: string;
@@ -9,6 +10,14 @@ type ThematicMatch = {
   endTime: number;
   score: number;
 };
+
+const TRANSCRIPT_SEARCH_RETURN_PROPERTIES: QueryProperty<Chunks>[] = [
+  'transcription',
+  'speaker',
+  'section_title',
+  'start_time',
+  'end_time',
+];
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +33,16 @@ export async function POST(request: Request) {
     }
 
     const searchFn = searchType === 'bm25' ? bm25SearchForStoryId : vectorSearchForStoryId;
-    const response = await searchFn(SchemaTypes.Chunks, storyId, query, 20, undefined, 0.6, 1.0);
+    const response = await searchFn(
+      SchemaTypes.Chunks,
+      storyId,
+      query,
+      20,
+      undefined,
+      0.6,
+      1.0,
+      TRANSCRIPT_SEARCH_RETURN_PROPERTIES,
+    );
 
     const matches: ThematicMatch[] = response.objects.map((obj) => {
       const props = obj.properties as Chunks;

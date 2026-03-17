@@ -421,6 +421,7 @@ export async function vectorSearchForStoryId<T extends SchemaTypes>(
   nerFilters?: string[],
   minValue?: number,
   maxValue?: number,
+  returnProperties?: QueryProperty<SchemaMap[T]>[] | undefined,
 ) {
   const client = await initWeaviateClient();
   const myCollection = client.collections.get<SchemaMap[T]>(collection);
@@ -441,6 +442,7 @@ export async function vectorSearchForStoryId<T extends SchemaTypes>(
     filters: combinedFilter,
     limit,
     returnMetadata: ['distance', 'certainty', 'score'],
+    returnProperties,
   });
 
   const processedObjects = response.objects.map((obj) => {
@@ -474,6 +476,7 @@ export async function bm25SearchForStoryId<T extends SchemaTypes>(
   nerFilters?: string[],
   minValue?: number,
   maxValue?: number,
+  returnProperties?: QueryProperty<SchemaMap[T]>[] | undefined,
 ) {
   const client = await initWeaviateClient();
   const myCollection = client.collections.get<SchemaMap[T]>(collection);
@@ -492,6 +495,7 @@ export async function bm25SearchForStoryId<T extends SchemaTypes>(
     filters: combinedFilter,
     limit,
     returnMetadata: ['score'],
+    returnProperties,
   });
 
   const scores = response.objects.map((obj) => obj.metadata?.score ?? 0);

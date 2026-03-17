@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Box, Button, Paper, CircularProgress } from '@mui/material';
+import { Button, Paper, CircularProgress } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { useChatContext } from '@/app/discover/ChatContext';
+import { useChatInteraction } from '@/app/discover/ChatInteractionContext';
 import { Citation } from '@/types/chat';
 
 type SearchType = 'bm25' | 'vector' | 'hybrid';
@@ -24,7 +24,7 @@ export const TextSelectionPopover = ({ containerRef }: Props) => {
   const [selectedText, setSelectedText] = useState('');
   const [activeSearchType, setActiveSearchType] = useState<SearchType | null>(null);
   const setSearchResults = useChatStore((s) => s.setSearchResults);
-  const { onSearchResults } = useChatContext();
+  const { onSearchResults } = useChatInteraction();
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const handleMouseUp = useCallback(() => {
@@ -55,15 +55,12 @@ export const TextSelectionPopover = ({ containerRef }: Props) => {
     }, 10);
   }, [containerRef]);
 
-  const handleMouseDown = useCallback(
-    (e: MouseEvent) => {
-      // Don't close if clicking inside the popover
-      if (popoverRef.current?.contains(e.target as Node)) return;
-      setPosition(null);
-      setSelectedText('');
-    },
-    [],
-  );
+  const handleMouseDown = useCallback((e: MouseEvent) => {
+    // Don't close if clicking inside the popover
+    if (popoverRef.current?.contains(e.target as Node)) return;
+    setPosition(null);
+    setSelectedText('');
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -126,13 +123,7 @@ export const TextSelectionPopover = ({ containerRef }: Props) => {
         <Button
           key={type}
           size="small"
-          startIcon={
-            activeSearchType === type ? (
-              <CircularProgress size={14} />
-            ) : (
-              <SearchIcon fontSize="small" />
-            )
-          }
+          startIcon={activeSearchType === type ? <CircularProgress size={14} /> : <SearchIcon fontSize="small" />}
           onClick={() => handleSearch(type)}
           disabled={activeSearchType !== null}
           sx={{

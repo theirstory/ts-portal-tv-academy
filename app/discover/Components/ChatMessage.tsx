@@ -1,13 +1,13 @@
 'use client';
 
-import React, { memo, useState } from 'react';
+import { memo, useState } from 'react';
 import { Box, Button, IconButton, Tooltip } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { ChatMessage as ChatMessageType } from '@/types/chat';
 import { ChatMessageContent } from './ChatMessageContent';
-import { useChatContext } from '@/app/discover/ChatContext';
+import { useChatInteraction } from '@/app/discover/ChatInteractionContext';
 import { colors } from '@/lib/theme';
 
 type Props = {
@@ -17,7 +17,7 @@ type Props = {
 export const ChatMessage = memo(({ message }: Props) => {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
-  const { onViewSources } = useChatContext();
+  const { onViewSources } = useChatInteraction();
   const hasSources = !isUser && message.citations && message.citations.length > 0;
 
   const formatTimeChicago = (seconds: number): string => {
@@ -31,9 +31,7 @@ export const ChatMessage = memo(({ message }: Props) => {
 
     if (message.citations?.length) {
       const citationIndices = Array.from(
-        new Set(
-          Array.from(text.matchAll(/\[(\d+)\]/g)).map((m) => parseInt(m[1], 10))
-        )
+        new Set(Array.from(text.matchAll(/\[(\d+)\]/g)).map((m) => parseInt(m[1], 10))),
       ).sort((a, b) => a - b);
 
       if (citationIndices.length > 0) {
@@ -59,14 +57,18 @@ export const ChatMessage = memo(({ message }: Props) => {
 
   return (
     <Box
+      id={`chat-message-${message.id}`}
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        alignItems: isUser ? 'flex-end' : 'flex-start',
+        alignItems: isUser ? 'flex-end' : 'center',
+        width: '100%',
       }}>
       <Box
+        id={isUser ? `chat-user-message-${message.id}` : `chat-assistant-message-${message.id}`}
         sx={{
-          maxWidth: '85%',
+          width: isUser ? 'auto' : '100%',
+          maxWidth: isUser ? '85%' : 980,
           px: 2,
           py: 1.5,
           borderRadius: 2,
@@ -81,29 +83,21 @@ export const ChatMessage = memo(({ message }: Props) => {
         {isUser ? (
           message.content
         ) : (
-          <ChatMessageContent
-            content={message.content}
-            citations={message.citations}
-            messageId={message.id}
-          />
+          <ChatMessageContent content={message.content} citations={message.citations} messageId={message.id} />
         )}
       </Box>
       {!isUser && message.content && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+        <Box
+          id={`chat-message-actions-${message.id}`}
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, width: '100%', maxWidth: 980 }}>
           <Tooltip title={copied ? 'Copied!' : 'Copy response'} arrow>
-            <IconButton
-              size="small"
-              onClick={handleCopy}
-              sx={{ color: colors.text.secondary }}>
-              {copied ? (
-                <CheckIcon sx={{ fontSize: 16 }} />
-              ) : (
-                <ContentCopyIcon sx={{ fontSize: 16 }} />
-              )}
+            <IconButton id={`chat-copy-response-${message.id}`} size="small" onClick={handleCopy} sx={{ color: colors.text.secondary }}>
+              {copied ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
             </IconButton>
           </Tooltip>
           {hasSources && onViewSources && (
             <Button
+              id={`chat-inline-sources-${message.id}`}
               size="small"
               startIcon={<FormatListBulletedIcon sx={{ fontSize: 14 }} />}
               onClick={() => onViewSources(message.citations!)}

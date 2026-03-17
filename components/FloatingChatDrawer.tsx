@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CloseIcon from '@mui/icons-material/Close';
-import SendIcon from '@mui/icons-material/Send';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -25,26 +24,21 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FolderIcon from '@mui/icons-material/Folder';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import MuxPlayer from '@mux/mux-player-react';
 import { usePathname } from 'next/navigation';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { ChatMessage } from '@/app/discover/Components/ChatMessage';
-import { ChatMessage as ChatMessageType } from '@/types/chat';
-import { ChatContextProvider } from '@/app/discover/ChatContext';
-import { TextSelectionPopover } from '@/app/discover/Components/TextSelectionPopover';
+import { ChatInteractionProvider } from '@/app/discover/ChatInteractionContext';
 import { SidePanelTranscriptView } from '@/app/discover/Components/SidePanelTranscriptView';
 import { Citation } from '@/types/chat';
 import { colors } from '@/lib/theme';
 import { isChatEnabled } from '@/config/organizationConfig';
 import { getMuxPlaybackId } from '@/app/utils/converters';
 import { highlightSearchText } from '@/app/indexes/highlightSearch';
-
-const STARTER_QUESTIONS = [
-  'What are common themes across the collection?',
-  'What are interesting questions this collection could uniquely answer?',
-];
+import {
+  ChatComposer,
+  ChatMessagesThread,
+  ChatStarterQuestions,
+} from '@/app/discover/Components/SharedChatUI';
 
 const DRAWER_WIDTH = 440;
 
@@ -111,7 +105,6 @@ export const FloatingChatDrawer = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const pairRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
@@ -218,27 +211,6 @@ export const FloatingChatDrawer = () => {
     });
   };
 
-  // Group messages into Q&A pairs
-  type QAPair = { userMsg: ChatMessageType; assistantMsg: ChatMessageType };
-  const pairs = useMemo<QAPair[]>(() => {
-    const result: QAPair[] = [];
-    for (let i = 0; i < messages.length; i += 2) {
-      if (messages[i]?.role === 'user' && messages[i + 1]?.role === 'assistant') {
-        result.push({ userMsg: messages[i], assistantMsg: messages[i + 1] });
-      }
-    }
-    return result;
-  }, [messages]);
-
-  const navigateToPair = useCallback((pairIndex: number) => {
-    const pair = pairs[pairIndex];
-    if (!pair) return;
-    const el = pairRefs.current.get(pair.userMsg.id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [pairs]);
-
   const filteredSearchResults = useMemo(() => {
     const q = searchFilterTerm.trim().toLowerCase();
     if (!q) return drawerSearchResults;
@@ -289,7 +261,7 @@ export const FloatingChatDrawer = () => {
   const groups = groupByRecording(filteredSearchResults);
 
   return (
-    <ChatContextProvider value={chatContextValue}>
+    <ChatInteractionProvider value={chatContextValue}>
       {/* Floating AI button */}
       {!open && (
         <Tooltip title={`Ask AI (${shortcutLabel})`} placement="left">
@@ -898,217 +870,41 @@ export const FloatingChatDrawer = () => {
           {/* ===== CHAT VIEW ===== */}
           {currentView === 'chat' && (
             <>
-              <Box
-                ref={messagesContainerRef}
-                sx={{ flex: 1, overflow: 'auto', minHeight: 0, position: 'relative' }}>
-                <TextSelectionPopover containerRef={messagesContainerRef} />
-                {isEmpty ? (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      px: 2,
-                      py: 4,
-                    }}>
-                    <Typography
-                      variant="body1"
-                      fontWeight={600}
-                      color="text.primary"
-                      sx={{ textAlign: 'center', mb: 2 }}>
-                      Ask about the interviews
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-                      {STARTER_QUESTIONS.map((q) => (
-                        <Button
-                          key={q}
-                          variant="outlined"
-                          fullWidth
-                          onClick={() => handleStarterClick(q)}
-                          sx={{
-                            textTransform: 'none',
-                            borderRadius: 2,
-                            borderColor: colors.grey[300],
-                            color: colors.text.primary,
-                            fontSize: '0.8rem',
-                            py: 1.25,
-                            px: 2,
-                            justifyContent: 'flex-start',
-                            textAlign: 'left',
-                            bgcolor: colors.background.paper,
-                            '&:hover': {
-                              borderColor: colors.primary.main,
-                              bgcolor: colors.background.subtle,
-                            },
-                          }}>
-                          {q}
-                        </Button>
-                      ))}
-                    </Box>
-                  </Box>
-                ) : (
-                  <Box sx={{ px: 2, py: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {pairs.map((pair, pairIndex) => (
-                      <Box
-                        key={pair.userMsg.id}
-                        ref={(el: HTMLDivElement | null) => {
-                          if (el) pairRefs.current.set(pair.userMsg.id, el);
-                          else pairRefs.current.delete(pair.userMsg.id);
-                        }}>
-                        {/* Sticky user prompt */}
-                        <Box
-                          sx={{
-                            position: 'sticky',
-                            top: 0,
-                            zIndex: 10,
-                            pt: 1,
-                            pb: 0.5,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-end',
-                          }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end', width: '100%' }}>
-                            {pairs.length > 1 && (
-                              <Box sx={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-                                <IconButton
-                                  size="small"
-                                  disabled={pairIndex === 0}
-                                  onClick={() => navigateToPair(pairIndex - 1)}
-                                  sx={{ p: 0, color: colors.text.secondary, '&:hover': { color: colors.primary.main } }}>
-                                  <KeyboardArrowUpIcon sx={{ fontSize: 18 }} />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  disabled={pairIndex === pairs.length - 1}
-                                  onClick={() => navigateToPair(pairIndex + 1)}
-                                  sx={{ p: 0, color: colors.text.secondary, '&:hover': { color: colors.primary.main } }}>
-                                  <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
-                                </IconButton>
-                              </Box>
-                            )}
-                            <Box
-                              sx={{
-                                maxWidth: '85%',
-                                px: 1.5,
-                                py: 0.75,
-                                borderRadius: 2,
-                                bgcolor: colors.primary.main,
-                                color: colors.primary.contrastText,
-                                fontSize: '0.8rem',
-                                lineHeight: 1.5,
-                                boxShadow: `0 2px 8px ${colors.common.shadow}`,
-                              }}>
-                              {pair.userMsg.content}
-                            </Box>
-                          </Box>
-                          {pair.assistantMsg.citations && pair.assistantMsg.citations.length > 0 && (
-                            <Button
-                              size="small"
-                              startIcon={<FormatListBulletedIcon sx={{ fontSize: 14 }} />}
-                              onClick={() => handleViewSources(pair.assistantMsg.citations!)}
-                              sx={{
-                                textTransform: 'none',
-                                fontSize: '0.7rem',
-                                color: colors.text.secondary,
-                                py: 0.25,
-                                px: 1,
-                                minHeight: 0,
-                                mt: 0.5,
-                                '&:hover': { color: colors.primary.main },
-                              }}>
-                              View {pair.assistantMsg.citations.length} sources
-                            </Button>
-                          )}
-                        </Box>
-                        {/* Assistant response */}
-                        <Box sx={{ pt: 1 }}>
-                          {isStreaming && !pair.assistantMsg.content && streamingStatus ? (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 1 }}>
-                              <Box
-                                sx={{
-                                  width: 16,
-                                  height: 16,
-                                  borderRadius: '50%',
-                                  border: '2px solid',
-                                  borderColor: 'primary.main',
-                                  borderTopColor: 'transparent',
-                                  animation: 'spin 0.8s linear infinite',
-                                  flexShrink: 0,
-                                  '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
-                                }}
-                              />
-                              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                                {streamingStatus}
-                              </Typography>
-                            </Box>
-                          ) : (
-                            <ChatMessage message={pair.assistantMsg} />
-                          )}
-                        </Box>
-                      </Box>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </Box>
-                )}
-              </Box>
-
-              {/* Input area */}
-              <Box
-                component="form"
-                onSubmit={handleSubmit}
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  px: 2,
-                  py: 1.5,
-                  borderTop: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: colors.background.paper,
-                  alignItems: 'flex-end',
-                  flexShrink: 0,
-                }}>
-                <TextField
-                  inputRef={inputRef}
-                  fullWidth
-                  multiline
-                  maxRows={4}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask a question..."
-                  variant="outlined"
-                  size="small"
-                  disabled={isStreaming}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      bgcolor: colors.background.default,
-                      borderRadius: 2,
-                      fontSize: '0.875rem',
-                    },
+              {isEmpty ? (
+                <Box sx={{ flex: 1, minHeight: 0 }}>
+                  <ChatStarterQuestions onStarterClick={handleStarterClick} variant="compact" />
+                </Box>
+              ) : (
+                <ChatMessagesThread
+                  messages={messages}
+                  isStreaming={isStreaming}
+                  streamingStatus={streamingStatus}
+                  messagesContainerRef={messagesContainerRef}
+                  messagesEndRef={messagesEndRef}
+                  onViewSources={(messageId) => {
+                    const message = messages.find((msg) => msg.id === messageId);
+                    if (message?.citations?.length) {
+                      handleViewSources(message.citations);
+                    }
                   }}
+                  variant="compact"
                 />
-                <IconButton
-                  type="submit"
-                  disabled={!input.trim() || isStreaming}
-                  sx={{
-                    bgcolor: colors.primary.main,
-                    color: colors.primary.contrastText,
-                    '&:hover': { bgcolor: colors.primary.dark },
-                    '&.Mui-disabled': { bgcolor: colors.grey[300] },
-                    borderRadius: 2,
-                    width: 36,
-                    height: 36,
-                    flexShrink: 0,
-                  }}>
-                  <SendIcon sx={{ fontSize: 16 }} />
-                </IconButton>
-              </Box>
+              )}
+
+              <ChatComposer
+                input={input}
+                isStreaming={isStreaming}
+                inputRef={inputRef}
+                onInputChange={setInput}
+                onSubmit={handleSubmit}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask a question..."
+                variant="compact"
+              />
             </>
           )}
         </Box>
       </Drawer>
-    </ChatContextProvider>
+    </ChatInteractionProvider>
   );
 };

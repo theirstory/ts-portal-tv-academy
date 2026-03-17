@@ -90,6 +90,9 @@ export interface ThemeColorsConfig {
 export interface FeaturesConfig {
   chat?: {
     enabled?: boolean;
+    provider?: 'anthropic' | 'openai' | 'openai-compatible';
+    model?: string;
+    baseUrl?: string;
   };
 }
 

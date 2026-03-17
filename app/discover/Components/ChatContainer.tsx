@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
 import { ChatPanel } from './ChatPanel';
 import { SidePanel } from './SidePanel';
 import { TextSelectionPopover } from './TextSelectionPopover';
-import { ChatContextProvider } from '@/app/discover/ChatContext';
+import { ChatInteractionProvider } from '@/app/discover/ChatInteractionContext';
 import { useChatStore } from '@/app/stores/useChatStore';
 import { Citation, ChatMessage } from '@/types/chat';
 
@@ -66,7 +66,7 @@ export const ChatContainer = () => {
   const chatContextValue = { onViewSources: handleViewSources };
 
   return (
-    <ChatContextProvider value={chatContextValue}>
+    <ChatInteractionProvider value={chatContextValue}>
       <Box
         ref={containerRef}
         sx={{
@@ -99,6 +99,6 @@ export const ChatContainer = () => {
         </Box>
         <TextSelectionPopover containerRef={containerRef} />
       </Box>
-    </ChatContextProvider>
+    </ChatInteractionProvider>
   );
 };

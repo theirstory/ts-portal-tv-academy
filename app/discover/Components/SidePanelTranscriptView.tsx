@@ -26,7 +26,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import MuxPlayer from '@mux/mux-player-react';
 import MuxPlayerElement from '@mux/mux-player';
 import { useChatStore } from '@/app/stores/useChatStore';
-import { useChatContext } from '@/app/discover/ChatContext';
+import { useChatInteraction } from '@/app/discover/ChatInteractionContext';
 import { colors } from '@/lib/theme';
 import { Transcription, Section, Word } from '@/types/transcription';
 import { TextSelectionPopover } from './TextSelectionPopover';
@@ -269,7 +269,7 @@ export const SidePanelTranscriptView = () => {
   const transcriptCitation = useChatStore((s) => s.transcriptCitation);
   const previousMode = useChatStore((s) => s.previousMode);
   const storeGoBack = useChatStore((s) => s.goBack);
-  const { onGoBack } = useChatContext();
+  const { onGoBack } = useChatInteraction();
   const goBack = onGoBack ?? storeGoBack;
 
   const [data, setData] = useState<TranscriptData | null>(null);

@@ -60,6 +60,39 @@ open http://localhost:3000
 
 **Important:** Edit `config.json` to customize your portal with organization name, branding colors, logos, and NER entity labels. See [CONFIGURATION.md](./CONFIGURATION.md) for all configuration options.
 
+### Chat provider configuration
+
+The `/discover` chat now supports multiple LLM providers through a shared provider abstraction.
+
+- Set the default non-secret chat settings in `config.json` under `features.chat`:
+  - `provider`: `anthropic`, `openai`, or `openai-compatible`
+  - `model`: provider-specific model name
+  - `baseUrl`: optional for OpenAI-compatible endpoints
+- Store API keys in environment variables, not in `config.json`
+
+Example:
+
+```json
+{
+  "features": {
+    "chat": {
+      "enabled": true,
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "baseUrl": ""
+    }
+  }
+}
+```
+
+Environment variables:
+
+```bash
+ANTHROPIC_API_KEY=
+OPENAI_API_KEY=
+AI_API_KEY=
+```
+
 **First time:** may take several minutes while GLiNER / embedding / spaCy models download. Subsequent runs are much faster thanks to cache reuse.
 
 ## NLP Environment Notes
