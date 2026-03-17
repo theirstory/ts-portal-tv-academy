@@ -91,7 +91,11 @@ export const ChatMessage = memo(({ message }: Props) => {
           id={`chat-message-actions-${message.id}`}
           sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, width: '100%', maxWidth: 980 }}>
           <Tooltip title={copied ? 'Copied!' : 'Copy response'} arrow>
-            <IconButton id={`chat-copy-response-${message.id}`} size="small" onClick={handleCopy} sx={{ color: colors.text.secondary }}>
+            <IconButton
+              id={`chat-copy-response-${message.id}`}
+              size="small"
+              onClick={handleCopy}
+              sx={{ color: colors.text.secondary }}>
               {copied ? <CheckIcon sx={{ fontSize: 16 }} /> : <ContentCopyIcon sx={{ fontSize: 16 }} />}
             </IconButton>
           </Tooltip>

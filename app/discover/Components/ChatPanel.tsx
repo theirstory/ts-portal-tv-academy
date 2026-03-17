@@ -24,8 +24,16 @@ export const ChatPanel = () => {
   const isEmpty = messages.length === 0;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (isStreaming) {
+      container.scrollTop = container.scrollHeight;
+      return;
+    }
+
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, isStreaming]);
 
   // Scroll to citation in chat when triggered from side panel — scoped to the correct Q&A pair
   useEffect(() => {
