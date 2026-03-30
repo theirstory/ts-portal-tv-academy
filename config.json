@@ -2,13 +2,13 @@
   "_comment": "This is an example configuration file. Copy this to config.json and customize for your organization.",
 
   "organization": {
-    "name": "Your Organization Name",
-    "displayName": "Your Portal Title",
-    "description": "Description of your portal and collection. This appears on the main page.",
+    "name": "University of Connecticut",
+    "displayName": "African American Oral Histories",
+    "description": "A digital archive of oral histories from African American individuals, created by the University of Connecticut Department of History.",
     "logo": {
       "_comment": "Optional custom logo path from /public (example: /images/logo.png). If empty, default LogoArchive is used.",
-      "path": "",
-      "alt": "Organization logo"
+      "path": "/images/uconn-logo.png",
+      "alt": "UConn Logo"
     }
   },
 

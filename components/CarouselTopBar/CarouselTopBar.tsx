@@ -6,7 +6,7 @@ import { config } from '@/config/organizationConfig';
 export const CarouselTopBar = ({ children, isCollapsed }: { children: React.ReactNode; isCollapsed: boolean }) => {
   const [carouselIndex, setCarouselIndex] = useState(0);
 
-  const { images: configImages = [], intervalMs = 5000 } = config?.ui?.carouselTopBar ?? {};
+  const { images: configImages = [], intervalMs = 5000, backgroundColor } = config?.ui?.carouselTopBar ?? {};
 
   const carouselImages = useMemo(() => {
     return configImages.length > 0 ? configImages : [];
@@ -39,8 +39,8 @@ export const CarouselTopBar = ({ children, isCollapsed }: { children: React.Reac
       position="relative"
       height={isCollapsed ? '100%' : { xs: '25vh', md: '30vh' }}
       sx={{
-        backgroundColor: colors.common.black,
-        backgroundImage: `url("${carouselImages[carouselIndex]}")`,
+        backgroundColor: backgroundColor || colors.common.black,
+        backgroundImage: carouselImages.length > 0 ? `url("${carouselImages[carouselIndex]}")` : 'none',
         backgroundSize: '100%',
         backgroundRepeat: 'no-repeat',
         transition: 'background 0.8s ease-in-out, height 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
