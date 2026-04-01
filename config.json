@@ -97,8 +97,8 @@
       "_commentModel": "Set the model name for the selected provider. Example: claude-sonnet-4-20250514 or gpt-4.1-mini",
       "_commentBaseUrl": "Only needed for openai-compatible providers. Leave empty for Anthropic. For OpenAI, you can also leave it empty to use the default https://api.openai.com/v1",
       "enabled": true,
-      "provider": "openai",
-      "model": "gpt-4.1-mini",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
       "baseUrl": ""
     }
   },
