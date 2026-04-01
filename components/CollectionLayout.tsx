@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useSemanticSearchStore } from '@/app/stores/useSemanticSearchStore';
@@ -15,9 +15,11 @@ import { ActiveFiltersDisplay } from './ActiveFiltersDisplay';
 import { Pagination } from './Pagination';
 import { NoInterviewsMessage } from './NoInterviewsMessage';
 import { colors } from '@/lib/theme';
+import useLayoutState from '@/app/stores/useLayout';
 
 export default function CollectionLayout() {
   const { loading: semanticSearchLoading, stories, result, currentPage, hasSearched } = useSemanticSearchStore();
+  const { setTopBarCollapsedAuto } = useLayoutState();
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const storiesTestimonies = stories as WeaviateReturn<Testimonies, any> | null;
@@ -28,6 +30,13 @@ export default function CollectionLayout() {
       setViewMode(newView);
     }
   };
+
+  const handleResultsScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      setTopBarCollapsedAuto(event.currentTarget.scrollTop > 8);
+    },
+    [setTopBarCollapsedAuto],
+  );
 
   return (
     <Box
@@ -83,6 +92,7 @@ export default function CollectionLayout() {
             storiesTestimonies?.objects.length > 0 && (
               <>
                 <Box
+                  onScroll={handleResultsScroll}
                   sx={{
                     flex: { xs: 'unset', md: 1 },
                     minHeight: { xs: 'calc(100vh - 475px)', md: 0 },

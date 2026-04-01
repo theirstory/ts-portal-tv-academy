@@ -1,19 +1,28 @@
 import { useSemanticSearchStore } from '@/app/stores/useSemanticSearchStore';
+import useLayoutState from '@/app/stores/useLayout';
 import { colors } from '@/lib/theme';
 import { Chunks } from '@/types/weaviate';
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { WeaviateReturn } from 'weaviate-client';
 import { PaginationSearch } from './PaginationSearch';
 import { SearchTableRow } from './SearchTableRow';
 
 export const SearchTable = () => {
   const { result } = useSemanticSearchStore();
+  const { setTopBarCollapsedAuto } = useLayoutState();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const results = result as WeaviateReturn<Chunks, any> | null;
   const resultsArray = results?.objects || [];
+
+  const handleResultsScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      setTopBarCollapsedAuto(event.currentTarget.scrollTop > 8);
+    },
+    [setTopBarCollapsedAuto],
+  );
 
   if (isMobile) {
     // Mobile Card Layout
@@ -28,6 +37,7 @@ export const SearchTable = () => {
           flexDirection: 'column',
         }}>
         <Box
+          onScroll={handleResultsScroll}
           sx={{
             flex: 1,
             minHeight: 0,
@@ -77,6 +87,7 @@ export const SearchTable = () => {
 
       {/* Body scrollable */}
       <Box
+        onScroll={handleResultsScroll}
         sx={{
           flex: 1,
           minHeight: 0,
