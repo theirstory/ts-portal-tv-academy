@@ -5,14 +5,16 @@ import { Box, Button, Tooltip, Typography } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useChatStore } from '@/app/stores/useChatStore';
 import { colors } from '@/lib/theme';
-import { ChatComposer, ChatMessagesThread, ChatStarterQuestions } from './SharedChatUI';
+import { ChatComposer, ChatMessagesThread, ChatStarterQuestions, getChatCopy } from './SharedChatUI';
 
 export const ChatPanel = () => {
   const [input, setInput] = useState('');
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingStatus = useChatStore((s) => s.streamingStatus);
+  const selectedLanguage = useChatStore((s) => s.selectedLanguage);
   const sendMessage = useChatStore((s) => s.sendMessage);
+  const setSelectedLanguage = useChatStore((s) => s.setSelectedLanguage);
   const stopStreaming = useChatStore((s) => s.stopStreaming);
   const clearMessages = useChatStore((s) => s.clearMessages);
   const showSourcesForMessage = useChatStore((s) => s.showSourcesForMessage);
@@ -22,6 +24,7 @@ export const ChatPanel = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isEmpty = messages.length === 0;
+  const copy = getChatCopy(selectedLanguage);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -99,7 +102,7 @@ export const ChatPanel = () => {
             fontWeight={700}
             color={colors.text.primary}
             sx={{ textAlign: 'center', mb: 0.5 }}>
-            Ask about the interviews
+            {copy.title}
           </Typography>
 
           <ChatComposer
@@ -109,12 +112,18 @@ export const ChatPanel = () => {
             onSubmit={handleSubmit}
             onKeyDown={handleKeyDown}
             onStop={stopStreaming}
-            placeholder="Ask a question about the interviews..."
+            placeholder={copy.placeholderLong}
             fullHeight
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={setSelectedLanguage}
           />
 
           <Box sx={{ mt: 2 }}>
-            <ChatStarterQuestions onStarterClick={handleStarterClick} showTitle={false} />
+            <ChatStarterQuestions
+              onStarterClick={handleStarterClick}
+              selectedLanguage={selectedLanguage}
+              showTitle={false}
+            />
           </Box>
         </Box>
       </Box>
@@ -173,8 +182,10 @@ export const ChatPanel = () => {
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
         onStop={stopStreaming}
-        placeholder="Ask a question about the interviews..."
+        placeholder={copy.placeholderLong}
         variant="compact"
+        selectedLanguage={selectedLanguage}
+        onLanguageChange={setSelectedLanguage}
       />
     </Box>
   );

@@ -37,7 +37,7 @@ import { muxPlayerThemeProps } from '@/lib/theme/muxPlayerTheme';
 import { isChatEnabled } from '@/config/organizationConfig';
 import { getMuxPlaybackId } from '@/app/utils/converters';
 import { highlightSearchText } from '@/app/indexes/highlightSearch';
-import { ChatComposer, ChatMessagesThread, ChatStarterQuestions } from '@/app/discover/Components/SharedChatUI';
+import { ChatComposer, ChatMessagesThread, ChatStarterQuestions, getChatCopy } from '@/app/discover/Components/SharedChatUI';
 
 const DRAWER_WIDTH = 440;
 
@@ -111,7 +111,9 @@ export const FloatingChatDrawer = () => {
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingStatus = useChatStore((s) => s.streamingStatus);
+  const selectedLanguage = useChatStore((s) => s.selectedLanguage);
   const sendMessage = useChatStore((s) => s.sendMessage);
+  const setSelectedLanguage = useChatStore((s) => s.setSelectedLanguage);
   const stopStreaming = useChatStore((s) => s.stopStreaming);
   const clearMessages = useChatStore((s) => s.clearMessages);
   const storeSetTranscriptCitation = useChatStore((s) => s.openTranscript);
@@ -287,6 +289,7 @@ export const FloatingChatDrawer = () => {
   const shortcutLabel = isMac ? '⌘K' : 'Ctrl+K';
   const searchHighlight = searchFilterTerm.trim() || searchQuery;
   const groups = groupByRecording(filteredSearchResults);
+  const copy = getChatCopy(selectedLanguage);
 
   return (
     <ChatInteractionProvider value={chatContextValue}>
@@ -992,7 +995,11 @@ export const FloatingChatDrawer = () => {
             <>
               {isEmpty ? (
                 <Box sx={{ flex: 1, minHeight: 0 }}>
-                  <ChatStarterQuestions onStarterClick={handleStarterClick} variant="compact" />
+                  <ChatStarterQuestions
+                    onStarterClick={handleStarterClick}
+                    selectedLanguage={selectedLanguage}
+                    variant="compact"
+                  />
                 </Box>
               ) : (
                 <ChatMessagesThread
@@ -1019,8 +1026,10 @@ export const FloatingChatDrawer = () => {
                 onSubmit={handleSubmit}
                 onKeyDown={handleKeyDown}
                 onStop={stopStreaming}
-                placeholder="Ask a question..."
+                placeholder={copy.placeholderShort}
                 variant="compact"
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={setSelectedLanguage}
               />
             </>
           )}

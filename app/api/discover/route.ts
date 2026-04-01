@@ -2,7 +2,7 @@ import { retrieveChunksForChat, retrieveAllChapterSynopses } from '@/lib/weaviat
 import { ChatRequest, Citation } from '@/types/chat';
 import { createChatProvider, getChatProviderSettings } from '@/lib/ai/chatProvider';
 
-function buildSystemPrompt(allCitations: Citation[]): string {
+function buildSystemPrompt(allCitations: Citation[], responseLanguage: string): string {
   const sourcesBlock = allCitations
     .map((c) => {
       if (c.isChapterSynopsis) {
@@ -29,6 +29,8 @@ RULES:
 - Be concise but thorough. Synthesize information across multiple sources when relevant.
 - When multiple speakers discuss the same topic, note the different perspectives.
 - For broad questions about themes or patterns, draw on the chapter summaries to cover the full breadth of the collection.
+- Write the entire answer in ${responseLanguage}.
+- If you include a direct quote from a source, keep the quote in its original language, but keep your explanation in ${responseLanguage}.
 
 SOURCES:
 ${sourcesBlock}`;
@@ -51,7 +53,7 @@ function getUserFacingDiscoverError(err: unknown): string {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as ChatRequest;
-    const { messages, query } = body;
+    const { messages, query, responseLanguage } = body;
 
     if (!query?.trim()) {
       return Response.json({ error: 'Query is required' }, { status: 400 });
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
             index: i + 1,
           }));
 
-          const systemPrompt = buildSystemPrompt(allCitations);
+          const systemPrompt = buildSystemPrompt(allCitations, responseLanguage?.trim() || 'English');
           const citations = allCitations;
 
           // Send citations to client
