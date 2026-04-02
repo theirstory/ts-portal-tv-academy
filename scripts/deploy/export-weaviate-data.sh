@@ -7,7 +7,7 @@ set -euo pipefail
 #   export + upload/sync to server:
 #     ./scripts/deploy/export-weaviate-data.sh <backup_path> <volume_name> <user@server> <remote_repo_path>
 # Example:
-#     ./scripts/deploy/export-weaviate-data.sh "$PWD/weaviate-data.tar.gz" ts-portals_weaviate_data root@206.189.161.190 /root/ts-portal
+#     ./scripts/deploy/export-weaviate-data.sh "$PWD/weaviate-data.tar.gz" ts-portal_weaviate_data root@206.189.161.190 /root/ts-portal
 
 backup_path="${1:-$PWD/weaviate-data.tar.gz}"
 project_name="${COMPOSE_PROJECT_NAME:-$(basename "$PWD")}"
