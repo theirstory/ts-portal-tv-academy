@@ -69,8 +69,13 @@ type ProcessResult =
 
 const SUMMARY_PROMPTS = {
   system: 'You are a writer that creates summaries',
+  user: 'Do not mention the messages and treat them as a whole. The messages constitute the transcript of a recording, which is most likely an interview. The summary should give a researcher a general overview of the key topics discussed in the recording, so that the researcher can decide wheter or not the recording is relevant to their research. The summary should be no more than 100 words, although it can be less.',
+};
+
+const INDEX_PROMPTS = {
+  system: 'You are a writer that creates indexes',
   user:
-    'Do not mention the messages and treat them as a whole. The messages constitute the transcript of a recording, which is most likely an interview. The summary should give a researcher a general overview of the key topics discussed in the recording, so that the researcher can decide wheter or not the recording is relevant to their research. The summary should be no more than 100 words, although it can be less.',
+    'Please create an index for this interview.\nEach chapter of the index should contain:\n1) a timecode signifying the start of the chapter. The timecode should have hours, minutes and seconds, not milliseconds.;\n2) a title for the chapter;\n3) a summary of the chapter;\n4) keywords separated by commas.\nI want a JSON object with an array of chapter with the attributes',
 };
 
 const VALIDATION_RECHECK_DELAY_MS = 15_000;
@@ -172,9 +177,7 @@ async function loadStoryIdsFromFile(path: string): Promise<string[]> {
       throw new Error(`File ${path} must contain a JSON array of story IDs.`);
     }
 
-    return parsed
-      .map((item) => (typeof item === 'string' ? item.trim() : ''))
-      .filter(Boolean);
+    return parsed.map((item) => (typeof item === 'string' ? item.trim() : '')).filter(Boolean);
   }
 
   return parseListInput(trimmed);
@@ -386,8 +389,7 @@ async function fetchStoryDetails(storyId: string, options: CliOptions): Promise<
     transcriptPayload.story && typeof transcriptPayload.story === 'object' && !Array.isArray(transcriptPayload.story)
       ? (transcriptPayload.story as Record<string, unknown>)
       : null;
-  const mediaType =
-    typeof story?.custom_archive_media_type === 'string' ? story.custom_archive_media_type.trim() : '';
+  const mediaType = typeof story?.custom_archive_media_type === 'string' ? story.custom_archive_media_type.trim() : '';
   const publishFormat = resolvePublishFormat(mediaType, options.format);
 
   return {
@@ -399,7 +401,8 @@ async function fetchStoryDetails(storyId: string, options: CliOptions): Promise<
 }
 
 async function generateIndexes(storyId: string, options: CliOptions): Promise<void> {
-  const response = await fetch(`${options.apiBaseUrl}/stories/${storyId}/speechmatics/autochaptering`, {
+  const prompts = encodeURIComponent(JSON.stringify(INDEX_PROMPTS));
+  const response = await fetch(`${options.apiBaseUrl}/transcripts/${storyId}/chatgpt_index?prompts=${prompts}`, {
     method: 'GET',
     headers: buildHeaders(options),
   });
@@ -452,8 +455,7 @@ function parsePublishedMediaStatus(payload: unknown): PublishedMediaStatus {
     typedPayload.mediaUrl,
     typedPayload.media_url,
   ];
-  const publishedUrl =
-    publishedUrlCandidates.find((value) => typeof value === 'string' && value.trim())?.trim() ?? '';
+  const publishedUrl = publishedUrlCandidates.find((value) => typeof value === 'string' && value.trim())?.trim() ?? '';
   const publishedFromStatus =
     typeof typedPayload.published === 'boolean'
       ? typedPayload.published
@@ -563,7 +565,10 @@ function validateStoryPayload(storyId: string, payload: Record<string, unknown>)
       ? (payload.story as Record<string, unknown>)
       : null;
   const transcriptValue = transcript?.transcript;
-  const hasTranscript = typeof transcriptValue === 'string' && transcriptValue.trim().length > 0;
+  const hasTranscriptText = typeof transcriptValue === 'string' && transcriptValue.trim().length > 0;
+  const hasTranscriptWords = Array.isArray(transcript?.words) && transcript.words.length > 0;
+  const hasTranscriptParagraphs = Array.isArray(transcript?.paragraphs) && transcript.paragraphs.length > 0;
+  const hasTranscript = hasTranscriptText || hasTranscriptWords || hasTranscriptParagraphs;
   const indexes = Array.isArray(story?.indexes)
     ? story.indexes
     : Array.isArray((payload as Record<string, unknown>).indexes)
@@ -612,10 +617,7 @@ async function generateMissingValidationFields(
   }
 }
 
-async function recheckValidationAfterGeneration(
-  storyId: string,
-  options: CliOptions,
-): Promise<ValidationResult> {
+async function recheckValidationAfterGeneration(storyId: string, options: CliOptions): Promise<ValidationResult> {
   for (let attempt = 1; attempt <= VALIDATION_RECHECK_ATTEMPTS; attempt++) {
     await sleep(VALIDATION_RECHECK_DELAY_MS);
 
@@ -752,10 +754,27 @@ async function processStory(storyId: string, options: CliOptions): Promise<Proce
 
   const outPath = resolve(join(options.outDir, buildOutputFileName(finalPayload, storyId, storyDetails.publishFormat)));
 
-  await writeFile(outPath, `${JSON.stringify(finalPayload, null, 2)}\n`, {
-    encoding: 'utf-8',
-    flag: options.force ? 'w' : 'wx',
-  });
+  try {
+    await writeFile(outPath, `${JSON.stringify(finalPayload, null, 2)}\n`, {
+      encoding: 'utf-8',
+      flag: options.force ? 'w' : 'wx',
+    });
+  } catch (error) {
+    if (
+      !options.force &&
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'EEXIST'
+    ) {
+      console.log(
+        `[theirstory-import] ${storyId}: output file already exists at ${outPath}. Skipping write. Use --force to overwrite.`,
+      );
+      return { mode: 'other' };
+    }
+
+    throw error;
+  }
 
   console.log(
     `[theirstory-import] ${storyId}: media type "${storyDetails.mediaType || 'unknown'}" -> publish format "${storyDetails.publishFormat}".`,
@@ -828,7 +847,9 @@ async function main(): Promise<void> {
 
   const uniqueStoryIds = [...new Set(options.storyIds)];
   console.log(`[theirstory-import] Stories to import: ${uniqueStoryIds.length}`);
-  console.log(`[theirstory-import] Mode: ${options.validate ? 'validate' : options.unpublish ? 'unpublish' : 'import'}`);
+  console.log(
+    `[theirstory-import] Mode: ${options.validate ? 'validate' : options.unpublish ? 'unpublish' : 'import'}`,
+  );
   console.log(`[theirstory-import] Concurrency: ${options.concurrency}`);
   if (!options.unpublish && !options.validate) {
     console.log(`[theirstory-import] Output directory: ${resolve(options.outDir)}`);

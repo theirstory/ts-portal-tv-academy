@@ -7,7 +7,7 @@ This guide covers the `theirstory:import-stories` script, which helps prepare Th
 - Pulls stories from TheirStory by `storyIds`, `projectId`, or `folderId`
 - Publishes or unpublishes media when needed
 - Exports import-ready JSON files for `ts-portal`
-- Validates required metadata such as `transcript.transcript`, `story.indexes`, and `story.description`
+- Validates required metadata such as transcript content, `story.indexes`, and `story.description`
 - Can generate missing indexes and summaries during validation
 - Supports batch processing with configurable concurrency
 
