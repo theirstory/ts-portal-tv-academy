@@ -40,6 +40,9 @@ config.json
 # collection-specific data and assets
 json/interviews/
 
+# local weaviate data snapshot
+weaviate-data.tar.gz
+
 
 # TypeScript build cache
 tsconfig.tsbuildinfo
