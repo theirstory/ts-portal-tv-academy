@@ -10,6 +10,7 @@ import { throttle } from 'lodash';
 import { colors, theme } from '@/lib/theme';
 import { muxPlayerThemeProps } from '@/lib/theme/muxPlayerTheme';
 import { AudioFileWave } from '@/app/assets/svg/AudioFileWave';
+import { getMuxPlaybackId } from '@/app/utils/converters';
 
 export const StoryVideo = () => {
   const { storyHubPage } = useSemanticSearchStore();
@@ -18,6 +19,10 @@ export const StoryVideo = () => {
   const videoRef = useRef<MuxPlayerElement>(null);
   const videoSrc = storyHubPage?.properties.video_url;
   const isAudioFile = storyHubPage?.properties.isAudioFile || false;
+  const playbackId = !isAudioFile ? getMuxPlaybackId(videoSrc ?? null) : null;
+  const posterUrl = playbackId
+    ? `https://image.mux.com/${playbackId}/thumbnail.jpg?time=5&fit_mode=preserve`
+    : undefined;
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   // Throttle the setCurrentTime to avoid performance issues
@@ -83,6 +88,7 @@ export const StoryVideo = () => {
           autoPlay={isMobile} // this is important because will break the word highlighting if the user has to manually start the video on mobile
           ref={videoRef}
           src={videoSrc}
+          poster={posterUrl}
           audio={isAudioFile}
           onPlay={() => {
             setIsPlaying(true);
