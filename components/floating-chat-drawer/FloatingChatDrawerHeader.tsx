@@ -36,8 +36,8 @@ export function FloatingChatDrawerHeader({
         py: 1.5,
         borderBottom: '1px solid',
         borderColor: 'divider',
-        bgcolor: isDesktop ? colors.grey[900] : colors.primary.main,
-        color: colors.primary.contrastText,
+        bgcolor: colors.grey[900],
+        color: '#fff',
         flexShrink: 0,
       }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -54,19 +54,19 @@ export function FloatingChatDrawerHeader({
       <Box sx={{ display: 'flex', gap: 0.5 }}>
         {hasMessages && (
           <Tooltip title="Clear conversation">
-            <IconButton size="small" onClick={onClear} sx={{ color: colors.primary.contrastText }}>
+            <IconButton size="small" onClick={onClear} sx={{ color: '#fff' }}>
               <DeleteOutlineIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
         {!isMobile && (
           <Tooltip title="Open full chat">
-            <IconButton size="small" onClick={onOpenFullChat} sx={{ color: colors.primary.contrastText }}>
+            <IconButton size="small" onClick={onOpenFullChat} sx={{ color: '#fff' }}>
               <OpenInNewIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
-        <IconButton size="small" onClick={onClose} sx={{ color: colors.primary.contrastText }}>
+        <IconButton size="small" onClick={onClose} sx={{ color: '#fff' }}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>

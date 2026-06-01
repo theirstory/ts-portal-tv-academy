@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { useSemanticSearchStore } from '@/app/stores/useSemanticSearchStore';
@@ -14,13 +15,15 @@ import { SearchBox } from './SearchBox';
 import { ActiveFiltersDisplay } from './ActiveFiltersDisplay';
 import { Pagination } from './Pagination';
 import { NoInterviewsMessage } from './NoInterviewsMessage';
-import { colors } from '@/lib/theme';
-import useLayoutState from '@/app/stores/useLayout';
+import { WelcomeBand } from './WelcomeBand';
+import { HeroCarousel } from './HeroCarousel';
 
 export default function CollectionLayout() {
   const { loading: semanticSearchLoading, stories, result, currentPage, hasSearched } = useSemanticSearchStore();
-  const { setTopBarCollapsedAuto } = useLayoutState();
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+  const searchParams = useSearchParams();
+  const collectionParam = searchParams.get('collection');
+  const isUnfilteredHome = !hasSearched && !collectionParam;
 
   const storiesTestimonies = stories as WeaviateReturn<Testimonies, any> | null;
   const results = result?.objects || [];
@@ -31,164 +34,136 @@ export default function CollectionLayout() {
     }
   };
 
-  const handleResultsScroll = useCallback(
-    (event: React.UIEvent<HTMLDivElement>) => {
-      if (hasSearched) {
-        setTopBarCollapsedAuto(true);
-        return;
-      }
-
-      setTopBarCollapsedAuto(event.currentTarget.scrollTop > 8);
-    },
-    [hasSearched, setTopBarCollapsedAuto],
-  );
-
-  useEffect(() => {
-    if (hasSearched) {
-      setTopBarCollapsedAuto(true);
-    }
-  }, [hasSearched, setTopBarCollapsedAuto]);
-
   return (
-    <Box
-      sx={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      id="collection-layout-container">
-      {/* Main Layout */}
+    <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }} id="collection-layout-container">
+      {isUnfilteredHome && storiesTestimonies?.objects && storiesTestimonies.objects.length > 0 && (
+        <>
+          <HeroCarousel stories={storiesTestimonies.objects} />
+          <WelcomeBand />
+        </>
+      )}
+
       <Box
         sx={{
-          display: 'flex',
-          flex: 1,
-          minHeight: 0,
-          maxWidth: '1600px',
+          maxWidth: '1440px',
           mx: 'auto',
-          paddingX: { xs: 2, sm: 3, md: 4 },
-          paddingTop: { xs: 1, md: 2 },
-          paddingBottom: { xs: 2, md: 3 },
           width: '100%',
+          paddingX: { xs: 2, sm: 3, md: 4 },
+          paddingTop: { xs: 3, md: 5 },
+          paddingBottom: { xs: 3, md: 5 },
         }}>
-        {/* Main Content */}
-        <Box
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            minHeight: 0,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          id="main-content-box">
-          <SearchBox viewMode={viewMode} onViewChange={handleViewChange} />
-
-          {/* Active Filters Display */}
-          <ActiveFiltersDisplay />
-
-          {/* Loading State */}
-          {semanticSearchLoading && (
-            <Box display="flex" height="100%" justifyContent="center" alignItems="center" sx={{ py: { xs: 4, md: 8 } }}>
-              <CircularProgress size={'50px'} />
+        {isUnfilteredHome && storiesTestimonies?.objects && storiesTestimonies.objects.length > 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              gap: 2,
+              mb: { xs: 2, md: 3 },
+              flexWrap: 'wrap',
+            }}>
+            <Box>
+              <Typography
+                component="span"
+                sx={{
+                  display: 'inline-block',
+                  fontFamily: 'var(--font-cond), "Oswald", sans-serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.16em',
+                  fontWeight: 600,
+                  fontSize: '12.5px',
+                  color: 'var(--gold-ink)',
+                  mb: 1,
+                }}>
+                The Collection
+              </Typography>
+              <Typography
+                component="h2"
+                sx={{
+                  margin: 0,
+                  fontFamily: 'var(--font-display), "Archivo", sans-serif',
+                  fontWeight: 800,
+                  letterSpacing: '-0.01em',
+                  fontSize: { xs: '26px', md: '34px' },
+                  color: 'var(--ink)',
+                }}>
+                Browse the Archive
+              </Typography>
             </Box>
+          </Box>
+        )}
+
+        <SearchBox viewMode={viewMode} onViewChange={handleViewChange} />
+
+        <ActiveFiltersDisplay />
+
+        {semanticSearchLoading && (
+          <Box display="flex" justifyContent="center" alignItems="center" sx={{ py: { xs: 6, md: 10 } }}>
+            <CircularProgress size={'50px'} />
+          </Box>
+        )}
+
+        {!semanticSearchLoading && hasSearched && results.length > 0 && <SearchTable />}
+
+        {!semanticSearchLoading &&
+          !hasSearched &&
+          storiesTestimonies?.objects &&
+          storiesTestimonies.objects.length > 0 && (
+            <>
+              {viewMode === 'list' ? <ListView /> : <GridView />}
+              <Box sx={{ mt: { xs: 2, md: 3 } }}>
+                <Pagination />
+              </Box>
+            </>
           )}
 
-          {/* Semantic Search Results */}
-          {!semanticSearchLoading && hasSearched && results.length > 0 && <SearchTable />}
+        {!semanticSearchLoading && hasSearched && results.length === 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: { xs: 4, md: 8 },
+            }}>
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '1rem', md: '1.25rem' },
+                textAlign: 'center',
+              }}>
+              {currentPage > 1 ? 'There are no more stories available.' : 'No stories available.'}
+            </Typography>
+          </Box>
+        )}
 
-          {/* Show List/Grid View By Default (No Search) */}
-          {!semanticSearchLoading &&
-            !hasSearched &&
-            storiesTestimonies?.objects &&
-            storiesTestimonies?.objects.length > 0 && (
-              <>
-                <Box
-                  onScroll={handleResultsScroll}
-                  sx={{
-                    flex: { xs: 'unset', md: 1 },
-                    minHeight: { xs: 'calc(100vh - 475px)', md: 0 },
-                    overflow: 'auto',
-                    pr: { xs: 0, md: 1 },
-                    pb: { xs: 1, md: 2 },
-                    '&::-webkit-scrollbar': {
-                      width: '6px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                      backgroundColor: colors.grey[100],
-                      borderRadius: '3px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      backgroundColor: colors.grey[400],
-                      borderRadius: '3px',
-                      '&:hover': {
-                        backgroundColor: colors.grey[500],
-                      },
-                    },
-                  }}>
-                  {viewMode === 'list' ? <ListView /> : <GridView />}
-                </Box>
-                <Box sx={{ mt: { xs: 1, md: 'auto' } }}>
-                  <Pagination />
-                </Box>
-              </>
-            )}
-
-          {/* No Results Message */}
-          {!semanticSearchLoading && hasSearched && results.length === 0 && (
+        {!semanticSearchLoading &&
+          !hasSearched &&
+          storiesTestimonies?.objects &&
+          storiesTestimonies.objects.length === 0 &&
+          (currentPage > 1 ? (
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'space-around',
-                height: '100%',
-                px: { xs: 2, md: 0 },
+                justifyContent: 'center',
                 py: { xs: 4, md: 8 },
               }}>
               <Typography
                 variant="h6"
                 color="text.secondary"
                 sx={{
-                  mb: 2,
                   fontSize: { xs: '1rem', md: '1.25rem' },
                   textAlign: 'center',
                 }}>
-                {currentPage > 1 ? 'There are no more stories available.' : 'No stories available.'}
+                There are no more stories available.
               </Typography>
             </Box>
-          )}
-
-          {/* No Interviews Loaded Message */}
-          {!semanticSearchLoading &&
-            !hasSearched &&
-            storiesTestimonies?.objects &&
-            storiesTestimonies.objects.length === 0 &&
-            (currentPage > 1 ? (
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'space-around',
-                  height: '100%',
-                  px: { xs: 2, md: 0 },
-                  py: { xs: 4, md: 8 },
-                }}>
-                <Typography
-                  variant="h6"
-                  color="text.secondary"
-                  sx={{
-                    mb: 2,
-                    fontSize: { xs: '1rem', md: '1.25rem' },
-                    textAlign: 'center',
-                  }}>
-                  There are no more stories available.
-                </Typography>
-              </Box>
-            ) : (
-              <NoInterviewsMessage />
-            ))}
-        </Box>
+          ) : (
+            <NoInterviewsMessage />
+          ))}
       </Box>
     </Box>
   );

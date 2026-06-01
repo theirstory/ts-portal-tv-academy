@@ -1,20 +1,49 @@
 /* globals.css */
-body {
-  font-family: 'Public Sans', sans-serif;
+:root {
+  /* Brand palette (Television Academy · Interviews) */
+  --gold: #f1ad14;
+  --gold-deep: #d2920a;
+  --gold-ink: #8a5e00;
+  --gold-tint: #fdf3da;
+  --blue: #00a3da;
+  --blue-deep: #0682b0;
+  --blue-ink: #045c7e;
+  --blue-tint: #e1f3fb;
+  --navy: #0b1a28;
+  --navy-2: #102536;
+  --navy-3: #18344a;
 
+  --ink: #14202b;
+  --ink-2: #3d4a56;
+  --body: #5a6670;
+  --paper: #ffffff;
+  --paper-2: #f6f4ef;
+  --paper-3: #efede6;
+  --rule: #e4e2da;
+  --rule-cool: #e3e7eb;
+
+  --font-display: var(--font-archivo), 'Archivo', system-ui, sans-serif;
+  --font-cond: var(--font-oswald), 'Oswald', 'Archivo', sans-serif;
+  --font-body: var(--font-public-sans), 'Public Sans', system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), 'Source Serif 4', Georgia, serif;
+}
+
+body {
+  font-family: var(--font-body);
   margin: 0;
   padding: 0;
-  /* min-height: 100dvh;
-    min-width: 100dvw; */
   overflow: hidden;
-  color: white;
-  background:
-    linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.2) 100%),
-    linear-gradient(111deg, #6481a2 0.34%, #7a8796 100%);
-  /* Mobile optimizations */
+  color: var(--ink);
+  background: var(--paper-2);
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink);
 }
 
 /* Mobile-specific styles */
@@ -43,12 +72,17 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 3px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #fff;
+  background: rgba(20, 32, 43, 0.25);
   border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 32, 43, 0.4);
 }
 
 ::-webkit-scrollbar-track {
@@ -69,23 +103,6 @@ mux-player::part(poster) {
 mux-player::part(control-bar) {
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
-}
-
-/* Mobile scrollbar - slightly wider for touch */
-@media (max-width: 768px) {
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-  }
 }
 
 /* Mobile-specific video player adjustments */
@@ -118,7 +135,7 @@ mux-player::part(control-bar) {
 /* Mobile-friendly focus states */
 @media (max-width: 768px) {
   *:focus {
-    outline: 2px solid #1976d2;
+    outline: 2px solid var(--blue);
     outline-offset: 2px;
   }
 

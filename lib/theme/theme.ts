@@ -16,16 +16,43 @@ const themeOptions: ThemeOptions = {
   // TYPOGRAPHY
   // ==========================================
   typography: {
-    fontFamily: 'Inter, system-ui, sans-serif',
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 600 },
-    h3: { fontWeight: 600 },
-    h4: { fontWeight: 600 },
-    h5: { fontWeight: 500 },
-    h6: { fontWeight: 500 },
+    fontFamily: 'var(--font-body), "Public Sans", system-ui, sans-serif',
+    h1: {
+      fontFamily: 'var(--font-display), "Archivo", system-ui, sans-serif',
+      fontWeight: 800,
+      letterSpacing: '-0.01em',
+    },
+    h2: {
+      fontFamily: 'var(--font-display), "Archivo", system-ui, sans-serif',
+      fontWeight: 800,
+      letterSpacing: '-0.01em',
+    },
+    h3: {
+      fontFamily: 'var(--font-display), "Archivo", system-ui, sans-serif',
+      fontWeight: 800,
+      letterSpacing: '-0.01em',
+    },
+    h4: {
+      fontFamily: 'var(--font-display), "Archivo", system-ui, sans-serif',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    h5: {
+      fontFamily: 'var(--font-display), "Archivo", system-ui, sans-serif',
+      fontWeight: 700,
+    },
+    h6: {
+      fontFamily: 'var(--font-display), "Archivo", system-ui, sans-serif',
+      fontWeight: 700,
+    },
+    overline: {
+      fontFamily: 'var(--font-cond), "Oswald", sans-serif',
+      fontWeight: 600,
+      letterSpacing: '0.1em',
+    },
     button: {
       textTransform: 'none',
-      fontWeight: 500,
+      fontWeight: 700,
     },
   },
 
@@ -276,7 +303,8 @@ const themeOptions: ThemeOptions = {
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: colors.primary.main,
+          backgroundColor: 'transparent',
+          backgroundImage: 'none',
         },
       },
     },

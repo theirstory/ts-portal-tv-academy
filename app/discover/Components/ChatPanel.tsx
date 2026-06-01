@@ -3,12 +3,17 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Box, Button, Tooltip, Typography } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useChatStore } from '@/app/stores/useChatStore';
 import { colors } from '@/lib/theme';
 import { ChatComposer, ChatMessagesThread, ChatStarterQuestions, getChatCopy } from './SharedChatUI';
 
 export const ChatPanel = () => {
   const [input, setInput] = useState('');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const queuedQuery = searchParams.get('q')?.trim() || '';
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
   const streamingStatus = useChatStore((s) => s.streamingStatus);
@@ -55,6 +60,16 @@ export const ChatPanel = () => {
     }
     clearScrollToCitation();
   }, [scrollToCitationIndex, clearScrollToCitation, activeAssistantMessageId]);
+
+  const dispatchedQueryRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!queuedQuery) return;
+    if (dispatchedQueryRef.current === queuedQuery) return;
+    dispatchedQueryRef.current = queuedQuery;
+    sendMessage(queuedQuery);
+    router.replace(pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queuedQuery]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -4,7 +4,6 @@ import { useEffect, useCallback, useState } from 'react';
 import { Button, Popover, Box, Typography, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import { useZoteroStore } from '@/app/stores/useZoteroStore';
-import { colors } from '@/lib/theme';
 import { ZoteroIcon } from './ZoteroIcon';
 
 export const ZoteroAuthButton = () => {
@@ -64,7 +63,7 @@ export const ZoteroAuthButton = () => {
   };
 
   if (isCheckingAuth) {
-    return <CircularProgress size={16} sx={{ color: colors.primary.contrastText, mx: 1 }} />;
+    return <CircularProgress size={16} sx={{ color: '#fff', mx: 1 }} />;
   }
 
   if (!isAuthenticated) {
@@ -72,17 +71,24 @@ export const ZoteroAuthButton = () => {
       <Tooltip title="Connect your Zotero account to save citations">
         <Button
           onClick={handleConnect}
-          size="small"
-          variant="outlined"
+          variant="text"
+          disableRipple
           startIcon={<ZoteroIcon size={16} />}
           sx={{
             textTransform: 'none',
-            fontSize: '0.75rem',
-            color: colors.primary.contrastText,
-            borderColor: 'rgba(255,255,255,0.4)',
+            fontFamily: 'var(--font-body), "Public Sans", system-ui, sans-serif',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+            px: 1.5,
+            py: 1.1,
+            minWidth: 0,
+            gap: '4px',
+            color: 'rgba(255,255,255,.78)',
+            background: 'transparent',
             '&:hover': {
-              borderColor: colors.primary.contrastText,
-              backgroundColor: 'rgba(255,255,255,0.08)',
+              color: '#fff',
+              background: 'transparent',
             },
           }}>
           Connect Zotero
@@ -98,15 +104,24 @@ export const ZoteroAuthButton = () => {
           size="small"
           onClick={(e) => setAnchorEl(e.currentTarget)}
           sx={{
-            color: colors.primary.contrastText,
-            border: '1px solid rgba(255,255,255,0.4)',
+            color: 'rgba(255,255,255,.78)',
+            background: 'transparent',
+            border: 'none',
             borderRadius: '6px',
-            px: 1,
-            gap: 0.5,
-            fontSize: '0.75rem',
+            px: 1.5,
+            py: 1.1,
+            gap: 0.75,
+            fontFamily: 'var(--font-body), "Public Sans", system-ui, sans-serif',
+            fontSize: '13.5px',
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+            '&:hover': {
+              color: '#fff',
+              background: 'transparent',
+            },
           }}>
           <ZoteroIcon size={16} />
-          <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, fontSize: '0.75rem' }}>
+          <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, fontSize: '13.5px', fontWeight: 700 }}>
             {username || 'Zotero'}
           </Box>
         </IconButton>

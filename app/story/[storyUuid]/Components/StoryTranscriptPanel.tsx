@@ -315,16 +315,21 @@ export const StoryTranscriptPanel = ({ isMobile = false }: StoryTranscriptPanelP
           return (
             <Accordion key={section.start} expanded={isExpanded} onChange={() => toggleSection(section.start)}>
               <AccordionSummary
-                sx={{ backgroundColor: colors.primary.main, borderRadius: 1 }}
+                sx={{
+                  backgroundColor: colors.primary.main,
+                  borderRadius: 1,
+                  color: colors.text.primary,
+                  '& .MuiAccordionSummary-expandIconWrapper': { color: colors.text.primary },
+                }}
                 expandIcon={<ExpandMoreIcon />}
                 data-section-start={section.start}>
                 <Box display="flex" flexDirection="column" gap={1}>
-                  <Typography variant="subtitle1" fontWeight="bold" color={colors.common.white}>
+                  <Typography variant="subtitle1" fontWeight="bold" color={colors.text.primary}>
                     {section.title}
                   </Typography>
 
                   {section.synopsis && (
-                    <Typography fontSize="12px" color={colors.common.white}>
+                    <Typography fontSize="13px" color={colors.text.primary} sx={{ lineHeight: 1.55 }}>
                       {section.synopsis}
                     </Typography>
                   )}
