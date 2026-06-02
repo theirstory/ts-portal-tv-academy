@@ -58,14 +58,22 @@ const Slide = ({ story, visible }: SlideProps) => {
         gridTemplateColumns: { xs: '1fr', md: '1.05fr 0.95fr' },
         gridTemplateRows: { xs: 'minmax(260px, 320px) 1fr', md: '100%' },
       }}>
-      {/* Portrait */}
+      {/* Portrait (TV-bezel framing) */}
       <Box
         sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          background:
-            'radial-gradient(120% 90% at 30% 18%, rgba(255,255,255,.16), transparent 60%), linear-gradient(160deg, #1c3a52 0%, #0b1a28 78%), #0b1a28',
+          background: 'var(--navy)',
+          padding: { xs: '14px', md: '22px' },
+          display: 'flex',
         }}>
+        <Box
+          sx={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: '6px',
+            width: '100%',
+            background: '#0a121b',
+            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4)',
+          }}>
         {thumb && (
           <Box
             component="img"
@@ -77,29 +85,9 @@ const Slide = ({ story, visible }: SlideProps) => {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              opacity: 0.85,
-              mixBlendMode: 'luminosity',
             }}
           />
         )}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'linear-gradient(160deg, rgba(11,26,40,.10) 0%, rgba(11,26,40,.55) 78%), linear-gradient(180deg, rgba(0,163,218,.10), rgba(241,173,20,.10))',
-            mixBlendMode: 'multiply',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: 'repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 1px, transparent 1px 3px)',
-            opacity: 0.45,
-            mixBlendMode: 'multiply',
-          }}
-        />
         <Box
           sx={{
             position: 'absolute',
@@ -167,6 +155,7 @@ const Slide = ({ story, visible }: SlideProps) => {
             {duration}
           </Box>
         )}
+        </Box>
       </Box>
 
       {/* Copy */}
