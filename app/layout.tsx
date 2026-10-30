@@ -5,6 +5,7 @@ import './globals.css';
 import { AppTopBar } from '@/components/AppTopBar/AppTopBar';
 import { MainContainer } from './MainContainer';
 import { EmbedGuard } from './EmbedGuard';
+import { LoginGuard } from './LoginGuard';
 import MaterialUIThemeProvider from '@/components/ThemeProvider';
 import { FloatingChatDrawer } from '@/components/FloatingChatDrawer';
 import { organizationConfig } from '@/config/organizationConfig';
@@ -72,11 +73,15 @@ export default function RootLayout({
         <MaterialUIThemeProvider>
           <Suspense>
             <MainContainer>
-              <EmbedGuard>
-                <AppTopBar />
-              </EmbedGuard>
+              <LoginGuard>
+                <EmbedGuard>
+                  <AppTopBar />
+                </EmbedGuard>
+              </LoginGuard>
               {children}
-              <FloatingChatDrawer />
+              <LoginGuard>
+                <FloatingChatDrawer />
+              </LoginGuard>
             </MainContainer>
           </Suspense>
         </MaterialUIThemeProvider>

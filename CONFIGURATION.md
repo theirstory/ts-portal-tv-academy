@@ -161,6 +161,25 @@ Configure the default LLM provider used by `/discover`:
 - Use `OPENAI_API_KEY` for OpenAI
 - Use `OPENAI_API_KEY` or `AI_API_KEY` for OpenAI-compatible endpoints
 
+### 5. Site Password (Optional)
+
+Restrict the whole portal to people who know a shared password. This is set with environment variables rather than `config.json`, so the password never lands in the repository:
+
+```bash
+SITE_PASSWORD=your-shared-password
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SITE_AUTH_SECRET=64-char-hex-string
+```
+
+**Behavior:**
+
+- When `SITE_PASSWORD` is empty the portal is public (default)
+- When set, visitors are redirected to `/login`; API routes and server actions return `401` until they sign in
+- A successful login sets an httpOnly cookie valid for 30 days
+- Changing `SITE_PASSWORD` or `SITE_AUTH_SECRET` signs everyone out
+- Embedded pages (`?embed=true`) are also protected and won't load in iframes on other sites while the password is enabled
+- A "Sign out" link appears in the navbar while the password is enabled
+
 ## Customization Guide
 
 ### Step 1: Edit config.json
