@@ -9,6 +9,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { config, organizationConfig, isChatEnabled, isZoteroEnabled } from '@/config/organizationConfig';
 import { ZoteroAuthButton } from '@/components/zotero/ZoteroAuthButton';
+import { SignOutButton } from './SignOutButton';
 import { useSemanticSearchStore } from '@/app/stores/useSemanticSearchStore';
 
 export interface NavLink {
@@ -269,6 +270,7 @@ export const AppTopBar = () => {
                 <ZoteroAuthButton />
               </Box>
             )}
+            <SignOutButton sx={NAV_LINK_SX} />
             <Box
               sx={{
                 ml: 2,
@@ -443,6 +445,7 @@ export const AppTopBar = () => {
               <ZoteroAuthButton />
             </Box>
           )}
+          <SignOutButton sx={{ ...DRAWER_LINK_SX, mt: 1, textAlign: 'left' }} iconSize={18} />
         </Box>
         <Box
           sx={{
